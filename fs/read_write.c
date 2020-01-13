@@ -347,7 +347,7 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 	if (whence > SEEK_MAX)
 		goto out_putf;
 
-	offset = vfs_llseek(f.file, ((loff_t) offset_high << 32) | offset_low,
+	offset = vfs_llseek(f.file, ((u64) offset_high << 32) | offset_low,
 			whence);
 
 	retval = (int)offset;
@@ -1250,7 +1250,7 @@ COMPAT_SYSCALL_DEFINE5(preadv, compat_ulong_t, fd,
 		const struct compat_iovec __user *,vec,
 		compat_ulong_t, vlen, u32, pos_low, u32, pos_high)
 {
-	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
+	loff_t pos = ((u64)pos_high << 32) | pos_low;
 
 	return do_compat_preadv64(fd, vec, vlen, pos, 0);
 }
@@ -1272,7 +1272,7 @@ COMPAT_SYSCALL_DEFINE6(preadv2, compat_ulong_t, fd,
 		compat_ulong_t, vlen, u32, pos_low, u32, pos_high,
 		rwf_t, flags)
 {
-	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
+	loff_t pos = ((u64)pos_high << 32) | pos_low;
 
 	if (pos == -1)
 		return do_compat_readv(fd, vec, vlen, flags);
@@ -1359,7 +1359,7 @@ COMPAT_SYSCALL_DEFINE5(pwritev, compat_ulong_t, fd,
 		const struct compat_iovec __user *,vec,
 		compat_ulong_t, vlen, u32, pos_low, u32, pos_high)
 {
-	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
+	loff_t pos = ((u64)pos_high << 32) | pos_low;
 
 	return do_compat_pwritev64(fd, vec, vlen, pos, 0);
 }
@@ -1380,7 +1380,7 @@ COMPAT_SYSCALL_DEFINE6(pwritev2, compat_ulong_t, fd,
 		const struct compat_iovec __user *,vec,
 		compat_ulong_t, vlen, u32, pos_low, u32, pos_high, rwf_t, flags)
 {
-	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
+	loff_t pos = ((u64)pos_high << 32) | pos_low;
 
 	if (pos == -1)
 		return do_compat_writev(fd, vec, vlen, flags);
