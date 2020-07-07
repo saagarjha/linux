@@ -12,6 +12,10 @@
 #define __noinitretpoline
 #endif
 
+#define __text_section(s) __section_elf_macho(.s.text, TEXT,s)
+#define __data_section(s) __section_elf_macho(.s.data, DATA,s)
+#define __const_section(s) __section_elf_macho(.s.rodata, TEXT,s##_const)
+
 /* These macros are used to mark some functions or 
  * initialized data (doesn't apply to uninitialized data)
  * as `initialization' functions. The kernel can take this
@@ -47,11 +51,15 @@
 
 /* These are for everybody (although not all archs will actually
    discard it in modules) */
-#define __init		__section(.init.text) __cold  __latent_entropy __noinitretpoline
-#define __initdata	__section(.init.data)
-#define __initconst	__section(.init.rodata)
-#define __exitdata	__section(.exit.data)
+#define __init		__text_section(init) __cold  __latent_entropy __noinitretpoline
+#define __initdata	__data_section(init)
+#define __initconst	__const_section(init)
+#define __exitdata	__data_section(exit)
+#if defined(__ELF__)
 #define __exit_call	__used __section(.exitcall.exit)
+#elif defined(__MACH__)
+#define __exit_call	__used __section(DATA,exitcall)
+#endif
 
 /*
  * modpost check for section mismatches during the kernel build.
@@ -70,9 +78,9 @@
  *
  * The markers follow same syntax rules as __init / __initdata.
  */
-#define __ref            __section(.ref.text) noinline
-#define __refdata        __section(.ref.data)
-#define __refconst       __section(.ref.rodata)
+#define __ref            __text_section(ref) noinline
+#define __refdata        __data_section(ref)
+#define __refconst       __const_section(ref)
 
 #ifdef MODULE
 #define __exitused
@@ -80,16 +88,16 @@
 #define __exitused  __used
 #endif
 
-#define __exit          __section(.exit.text) __exitused __cold notrace
+#define __exit          __text_section(exit) __exitused __cold notrace
 
 /* Used for MEMORY_HOTPLUG */
-#define __meminit        __section(.meminit.text) __cold notrace \
+#define __meminit        __text_section(meminit) __cold notrace \
 						  __latent_entropy
-#define __meminitdata    __section(.meminit.data)
-#define __meminitconst   __section(.meminit.rodata)
-#define __memexit        __section(.memexit.text) __exitused __cold notrace
-#define __memexitdata    __section(.memexit.data)
-#define __memexitconst   __section(.memexit.rodata)
+#define __meminitdata    __data_section(meminit)
+#define __meminitconst   __const_section(meminit)
+#define __memexit        __text_section(memexit) __exitused __cold notrace
+#define __memexitdata    __data_section(memexit)
+#define __memexitconst   __const_section(memexit)
 
 /* For assembly routines */
 #define __HEAD		.section	".head.text","ax"
@@ -132,7 +140,7 @@ static inline initcall_t initcall_from_entry(initcall_entry_t *entry)
 }
 #endif
 
-extern initcall_entry_t __con_initcall_start[], __con_initcall_end[];
+extern initcall_entry_t __con_initcall_start[] __sect_start(DATA,.con_initcall), __con_initcall_end[] __sect_end(DATA,.con_initcall);
 
 /* Used for contructor calls. */
 typedef void (*ctor_fn_t)(void);
@@ -194,7 +202,7 @@ extern bool initcall_debug;
 #else
 #define ___define_initcall(fn, id, __sec) \
 	static initcall_t __initcall_##fn##id __used \
-		__attribute__((__section__(#__sec ".init"))) = fn;
+		__section_elf_macho(__sec.init, DATA,__sec) = fn;
 #endif
 
 #define __define_initcall(fn, id) ___define_initcall(fn, id, .initcall##id)
@@ -254,7 +262,7 @@ struct obs_kernel_param {
 	static const char __setup_str_##unique_id[] __initconst		\
 		__aligned(1) = str; 					\
 	static struct obs_kernel_param __setup_##unique_id		\
-		__used __section(.init.setup)				\
+		__used __section_elf_macho(.init.setup, DATA,init_setup)\
 		__attribute__((aligned((sizeof(long)))))		\
 		= { __setup_str_##unique_id, fn, early }
 
@@ -298,7 +306,7 @@ void __init parse_early_options(char *cmdline);
 #endif
 
 /* Data marked not to be saved by software suspend */
-#define __nosavedata __section(.data..nosave)
+#define __nosavedata __section_elf_macho(.data..nosave, DATA,nosave)
 
 #ifdef MODULE
 #define __exit_p(x) x

@@ -39,20 +39,31 @@ info()
 	fi
 }
 
+# Handles the differences in linker flags between GNU and Darwin
+kbuild_objects()
+{
+	flag="$1" # either empty or -Wl,
+	if [ "$(uname)" != "Darwin" ]; then
+		echo "$flag--whole-archive			\
+			${KBUILD_VMLINUX_OBJS}			\
+			$flag--no-whole-archive			\
+			$flag--start-group			\
+			${KBUILD_VMLINUX_LIBS}			\
+			$flag--end-group"
+	else
+		# The objs are actually response files
+		for obj in ${KBUILD_VMLINUX_OBJS}; do
+			cat "${obj}"
+		done
+		echo "${KBUILD_VMLINUX_LIBS}"
+	fi
+}
+
 # Link of vmlinux.o used for section mismatch analysis
 # ${1} output file
 modpost_link()
 {
-	local objects
-
-	objects="--whole-archive				\
-		${KBUILD_VMLINUX_OBJS}				\
-		--no-whole-archive				\
-		--start-group					\
-		${KBUILD_VMLINUX_LIBS}				\
-		--end-group"
-
-	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${objects}
+	${LD} ${KBUILD_LDFLAGS} -r -o ${1} $(kbuild_objects)
 }
 
 objtool_link()
@@ -98,35 +109,25 @@ vmlinux_link()
 		strip_debug=-Wl,--strip-debug
 	fi
 
-	if [ "${SRCARCH}" != "um" ]; then
-		objects="--whole-archive			\
-			${KBUILD_VMLINUX_OBJS}			\
-			--no-whole-archive			\
-			--start-group				\
-			${KBUILD_VMLINUX_LIBS}			\
-			--end-group				\
-			${@}"
-
-		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
-			${strip_debug#-Wl,}			\
-			-o ${output}				\
-			-T ${lds} ${objects}
-	else
-		objects="-Wl,--whole-archive			\
-			${KBUILD_VMLINUX_OBJS}			\
-			-Wl,--no-whole-archive			\
-			-Wl,--start-group			\
-			${KBUILD_VMLINUX_LIBS}			\
-			-Wl,--end-group				\
-			${@}"
-
+	if [ "${SRCARCH}" == "um" ]; then
 		${CC} ${CFLAGS_vmlinux}				\
 			${strip_debug}				\
 			-o ${output}				\
 			-Wl,-T,${lds}				\
-			${objects}				\
+			$(kbuild_objects -Wl,) ${@}		\
 			-lutil -lrt -lpthread
 		rm -f linux
+	elif [ "${SRCARCH}" == "ish" ]; then
+		${CC} ${CFLAGS_vmlinux}				\
+			-o ${output}				\
+			$(kbuild_objects -Wl,) ${@}		\
+			-lutil -lpthread
+		rm -f linux
+	else
+		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
+			${strip_debug#-Wl,}			\
+			-o ${output}				\
+			-T ${lds} $(kbuild_objects) ${@}
 	fi
 }
 
@@ -269,20 +270,22 @@ fi;
 # final build of init/
 ${MAKE} -f "${srctree}/scripts/Makefile.build" obj=init need-builtin=1
 
-#link vmlinux.o
-info LD vmlinux.o
-modpost_link vmlinux.o
-objtool_link vmlinux.o
+if [ -x scripts/mod/modpost ]; then
+	#link vmlinux.o
+	info LD vmlinux.o
+	modpost_link vmlinux.o
+	objtool_link vmlinux.o
 
-# modpost vmlinux.o to check for section mismatches
-${MAKE} -f "${srctree}/scripts/Makefile.modpost" MODPOST_VMLINUX=1
+	# modpost vmlinux.o to check for section mismatches
+	${MAKE} -f "${srctree}/scripts/Makefile.modpost" MODPOST_VMLINUX=1
 
-info MODINFO modules.builtin.modinfo
-${OBJCOPY} -j .modinfo -O binary vmlinux.o modules.builtin.modinfo
-info GEN modules.builtin
-# The second line aids cases where multiple modules share the same object.
-tr '\0' '\n' < modules.builtin.modinfo | sed -n 's/^[[:alnum:]:_]*\.file=//p' |
-	tr ' ' '\n' | uniq | sed -e 's:^:kernel/:' -e 's/$/.ko/' > modules.builtin
+	info MODINFO modules.builtin.modinfo
+	${OBJCOPY} -j .modinfo -O binary vmlinux.o modules.builtin.modinfo
+	info GEN modules.builtin
+	# The second line aids cases where multiple modules share the same object.
+	tr '\0' '\n' < modules.builtin.modinfo | sed -n 's/^[[:alnum:]:_]*\.file=//p' |
+		tr ' ' '\n' | uniq | sed -e 's:^:kernel/:' -e 's/$/.ko/' > modules.builtin
+fi
 
 btf_vmlinux_bin_o=""
 if [ -n "${CONFIG_DEBUG_INFO_BTF}" ]; then

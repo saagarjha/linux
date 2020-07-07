@@ -1,0 +1,32 @@
+config ISH
+	def_bool y
+	select GENERIC_ATOMIC64
+	select GENERIC_IRQ_SHOW
+	select THREAD_INFO_IN_TASK
+
+config 64BIT
+	bool
+	default y
+
+config MMU
+	bool
+	default y
+
+config HZ
+	int
+	default 100
+
+config PGTABLE_LEVELS
+	int
+	default 2
+
+config NO_DMA
+	def_bool y
+config NO_IOMEM
+	def_bool y
+config GENERIC_HWEIGHT
+	def_bool y
+config GENERIC_CSUM
+	def_bool y
+config GENERIC_CALIBRATE_DELAY
+	def_bool y

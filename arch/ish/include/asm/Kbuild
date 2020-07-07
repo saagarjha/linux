@@ -1,0 +1,5 @@
+generic-y += cache.h
+generic-y += cmpxchg.h
+generic-y += extable.h
+generic-y += irqflags.h
+generic-y += string.h

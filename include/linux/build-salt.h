@@ -5,6 +5,8 @@
 
 #define LINUX_ELFNOTE_BUILD_SALT       0x100
 
+#ifdef __ELF__
+
 #ifdef __ASSEMBLER__
 
 #define BUILD_SALT \
@@ -14,6 +16,12 @@
 
 #define BUILD_SALT \
        ELFNOTE32("Linux", LINUX_ELFNOTE_BUILD_SALT, CONFIG_BUILD_SALT)
+
+#endif
+
+#else /* __ELF__ */
+
+#define BUILD_SALT
 
 #endif
 

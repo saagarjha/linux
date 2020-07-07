@@ -842,8 +842,8 @@ ssize_t __modver_version_show(struct module_attribute *mattr,
 	return scnprintf(buf, PAGE_SIZE, "%s\n", vattr->version);
 }
 
-extern const struct module_version_attribute *__start___modver[];
-extern const struct module_version_attribute *__stop___modver[];
+extern const struct module_version_attribute *__start___modver[] __sect_start(DATA,__modver);
+extern const struct module_version_attribute *__stop___modver[] __sect_end(DATA,__modver);
 
 static void __init version_sysfs_builtin(void)
 {

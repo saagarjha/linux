@@ -244,8 +244,9 @@ quiet_cmd_ld = LD      $@
 # Archive
 # ---------------------------------------------------------------------------
 
+ar_flags = $(if $(CONFIG_HOST_DARWIN),cq,cDPrsT)
 quiet_cmd_ar = AR      $@
-      cmd_ar = rm -f $@; $(AR) cDPrsT $@ $(real-prereqs)
+      cmd_ar = rm -f $@; $(AR) $(ar_flags) $@ $(real-prereqs)
 
 # Objcopy
 # ---------------------------------------------------------------------------

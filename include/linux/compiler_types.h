@@ -197,8 +197,8 @@ struct ftrace_likely_data {
 #endif
 
 /* Section for code which can't be instrumented at all */
-#define noinstr								\
-	noinline notrace __attribute((__section__(".noinstr.text")))	\
+#define noinstr								  \
+	noinline notrace __section_elf_macho(.noinstr.text, TEXT,noinstr) \
 	__no_kcsan __no_sanitize_address
 
 #endif /* __KERNEL__ */

@@ -22,7 +22,8 @@
 
 #define __MODULE_INFO(tag, name, info)					  \
 static const char __UNIQUE_ID(name)[]					  \
-  __used __attribute__((section(".modinfo"), unused, aligned(1)))	  \
+  __used __section_elf_macho(.modinfo, DATA,modinfo)			  \
+  __attribute__((unused, aligned(1)))					  \
   = __MODULE_INFO_PREFIX __stringify(tag) "=" info
 
 #define __MODULE_PARM_TYPE(name, _type)					  \
@@ -80,7 +81,7 @@ struct kernel_param {
 	};
 };
 
-extern const struct kernel_param __start___param[], __stop___param[];
+extern const struct kernel_param __start___param[] __sect_start(DATA,__param), __stop___param[] __sect_end(DATA,__param);
 
 /* Special one for strings we want to copy into */
 struct kparam_string {
@@ -284,6 +285,7 @@ struct kparam_array
 
 /* This is the fundamental function for registering boot/module
    parameters. */
+#ifndef CONFIG_HOST_DARWIN
 #define __module_param_call(prefix, name, ops, arg, perm, level, flags)	\
 	/* Default value instead of permissions? */			\
 	static const char __param_str_##name[] = prefix #name;		\
@@ -292,6 +294,16 @@ struct kparam_array
     __attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) \
 	= { __param_str_##name, THIS_MODULE, ops,			\
 	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, { arg } }
+#else
+#define __module_param_call(prefix, name, ops, arg, perm, level, flags)	\
+	/* Default value instead of permissions? */			\
+	static const char __param_str_##name[] = prefix #name;		\
+	static struct kernel_param __moduleparam_const __param_##name	\
+	__used								\
+    __attribute__ ((unused,aligned(sizeof(void *)))) \
+	= { __param_str_##name, THIS_MODULE, ops,			\
+	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, { arg } }
+#endif
 
 /* Obsolete - use module_param_cb() */
 #define module_param_call(name, _set, _get, arg, perm)			\

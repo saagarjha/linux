@@ -2383,7 +2383,7 @@ static inline void mark_page_reserved(struct page *page)
  */
 static inline unsigned long free_initmem_default(int poison)
 {
-	extern char __init_begin[], __init_end[];
+	extern char __init_begin[] __sect_start(DATA,init), __init_end[] __sect_end(DATA,init);
 
 	return free_reserved_area(&__init_begin, &__init_end,
 				  poison, "unused kernel");

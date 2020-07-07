@@ -36,6 +36,8 @@
 
 #endif
 
+#ifdef __ELF__
+
 /*
  * Base implementations of per-CPU variable declarations and definitions, where
  * the section in which the variable is to be placed is provided by the
@@ -52,6 +54,11 @@
 
 #define __PCPU_DUMMY_ATTRS						\
 	__attribute__((section(".discard"), unused))
+
+#else
+#define __PCPU_ATTRS(sec) __percpu PER_CPU_ATTRIBUTES
+#define __PCPU_DUMMY_ATTRS(sec)
+#endif
 
 /*
  * s390 and alpha modules require percpu variables to be defined as

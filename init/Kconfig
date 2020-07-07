@@ -33,9 +33,16 @@ config GCC_VERSION
 	default $(shell,$(srctree)/scripts/gcc-version.sh $(CC)) if CC_IS_GCC
 	default 0
 
+config HOST_LINUX
+	def_bool $(success,uname | grep -q Linux)
+
+config HOST_DARWIN
+	def_bool $(success,uname | grep -q Darwin)
+
 config LD_VERSION
 	int
-	default $(shell,$(LD) --version | $(srctree)/scripts/ld-version.sh)
+	default $(shell,$(LD) -v 2>&1 | $(srctree)/scripts/ld-version.sh)
+	default 0
 
 config CC_IS_CLANG
 	def_bool $(success,echo "$(CC_VERSION_TEXT)" | grep -q clang)

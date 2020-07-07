@@ -32,17 +32,17 @@
  *	__softirqentry_text_start, __softirqentry_text_end
  *	__start_opd, __end_opd
  */
-extern char _text[], _stext[], _etext[];
-extern char _data[], _sdata[], _edata[];
-extern char __bss_start[], __bss_stop[];
-extern char __init_begin[], __init_end[];
-extern char _sinittext[], _einittext[];
+extern char _text[], _stext[] __sect_start(TEXT,text), _etext[] __sect_end(TEXT,text);
+extern char _data[], _sdata[] __sect_start(DATA,data), _edata[] __sect_end(DATA,data);
+extern char __bss_start[] __sect_start(DATA,bss), __bss_stop[] __sect_end(DATA,bss);
+extern char __init_begin[] __sect_start(DATA,init), __init_end[] __sect_end(DATA,init);
+extern char _sinittext[] __sect_start(TEXT,init), _einittext[] __sect_end(TEXT,init);
 extern char __start_ro_after_init[], __end_ro_after_init[];
-extern char _end[];
+extern char _end[] __sect_end(DATA,data); // TODO this is not likely to always be the end of the mach-o
 extern char __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
 extern char __kprobes_text_start[], __kprobes_text_end[];
 extern char __entry_text_start[], __entry_text_end[];
-extern char __start_rodata[], __end_rodata[];
+extern char __start_rodata[] __sect_start(DATA,const), __end_rodata[] __sect_end(DATA,const);
 extern char __irqentry_text_start[], __irqentry_text_end[];
 extern char __softirqentry_text_start[], __softirqentry_text_end[];
 extern char __start_once[], __end_once[];

@@ -187,7 +187,7 @@ static const char *argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
 const char *envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
 static const char *panic_later, *panic_param;
 
-extern const struct obs_kernel_param __setup_start[], __setup_end[];
+extern const struct obs_kernel_param __setup_start[] __sect_start(DATA,init_setup), __setup_end[] __sect_end(DATA,init_setup);
 
 static bool __init obsolete_checksetup(char *line)
 {
@@ -1216,16 +1216,16 @@ int __init_or_module do_one_initcall(initcall_t fn)
 }
 
 
-extern initcall_entry_t __initcall_start[];
-extern initcall_entry_t __initcall0_start[];
-extern initcall_entry_t __initcall1_start[];
-extern initcall_entry_t __initcall2_start[];
-extern initcall_entry_t __initcall3_start[];
-extern initcall_entry_t __initcall4_start[];
-extern initcall_entry_t __initcall5_start[];
-extern initcall_entry_t __initcall6_start[];
-extern initcall_entry_t __initcall7_start[];
-extern initcall_entry_t __initcall_end[];
+extern initcall_entry_t __initcall_start[] __sect_start(DATA,.initcallearly);
+extern initcall_entry_t __initcall0_start[] __sect_start(DATA,.initcall0);
+extern initcall_entry_t __initcall1_start[] __sect_start(DATA,.initcall1);
+extern initcall_entry_t __initcall2_start[] __sect_start(DATA,.initcall2);
+extern initcall_entry_t __initcall3_start[] __sect_start(DATA,.initcall3);
+extern initcall_entry_t __initcall4_start[] __sect_start(DATA,.initcall4);
+extern initcall_entry_t __initcall5_start[] __sect_start(DATA,.initcall5);
+extern initcall_entry_t __initcall6_start[] __sect_start(DATA,.initcall6);
+extern initcall_entry_t __initcall7_start[] __sect_start(DATA,.initcall7);
+extern initcall_entry_t __initcall_end[] __sect_end(DATA,.initcall7);
 
 static initcall_entry_t *initcall_levels[] __initdata = {
 	__initcall0_start,

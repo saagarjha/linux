@@ -34,7 +34,7 @@
  * but may get written to during init, so can't live in .rodata (via "const").
  */
 #ifndef __ro_after_init
-#define __ro_after_init __attribute__((__section__(".data..ro_after_init")))
+#define __ro_after_init __section_elf_macho(.data..ro_after_init, DATA,ro_after_init)
 #endif
 
 #ifndef ____cacheline_aligned
@@ -50,9 +50,15 @@
 #endif
 
 #ifndef __cacheline_aligned
+#if defined(__ELF__)
 #define __cacheline_aligned					\
   __attribute__((__aligned__(SMP_CACHE_BYTES),			\
 		 __section__(".data..cacheline_aligned")))
+#elif defined(__MACH__)
+#define __cacheline_aligned					\
+  __attribute__((__aligned__(SMP_CACHE_BYTES),			\
+		 __section__("__DATA,cache_aligned")))
+#endif
 #endif /* __cacheline_aligned */
 
 #ifndef __cacheline_aligned_in_smp

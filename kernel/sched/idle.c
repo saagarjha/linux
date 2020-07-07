@@ -11,7 +11,7 @@
 #include <trace/events/power.h>
 
 /* Linker adds these: start and end of __cpuidle functions */
-extern char __cpuidle_text_start[], __cpuidle_text_end[];
+extern char __cpuidle_text_start[] __sect_start(TEXT,cpuidle), __cpuidle_text_end[] __sect_end(TEXT,cpuidle);
 
 /**
  * sched_idle_set_state - Record idle state for the current CPU.

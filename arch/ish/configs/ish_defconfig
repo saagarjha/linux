@@ -1,0 +1,7 @@
+CONFIG_NAMESPACES=y
+CONFIG_EXPERT=y
+# CONFIG_KALLSYMS is not set
+# CONFIG_FW_LOADER is not set
+# CONFIG_INPUT is not set
+# CONFIG_SERIO is not set
+# CONFIG_VT is not set

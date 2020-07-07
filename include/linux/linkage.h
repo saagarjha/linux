@@ -23,8 +23,13 @@
 #endif
 
 #ifndef cond_syscall
+#ifdef __ELF__
+#define __WEAK ".weak"
+#elif __APPLE__
+#define __WEAK ".weak_definition"
+#endif
 #define cond_syscall(x)	asm(				\
-	".weak " __stringify(x) "\n\t"			\
+	__WEAK " " __stringify(x) "\n\t"		\
 	".set  " __stringify(x) ","			\
 		 __stringify(sys_ni_syscall))
 #endif

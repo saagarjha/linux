@@ -39,6 +39,11 @@ if [ -f /usr/include/ncurses.h ]; then
 	exit 0
 fi
 
+if [ -f $(xcrun --show-sdk-path)/usr/include/curses.h ]; then
+	echo libs=\"-lncurses\"
+	exit 0
+fi
+
 echo >&2 "*"
 echo >&2 "* Unable to find the ncurses package."
 echo >&2 "* Install ncurses (ncurses-devel or libncurses-dev"

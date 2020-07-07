@@ -47,7 +47,11 @@
 /*
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-alias-function-attribute
  */
-#define __alias(symbol)                 __attribute__((__alias__(#symbol)))
+#ifdef __APPLE__
+#define __alias(name, symbol)           ; __asm__(".globl _"#symbol"\n.set _"#symbol", _"#name)
+#else
+#define __alias(name, symbol)           __attribute__((alias(#_alias)))
+#endif
 
 /*
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-aligned-function-attribute
@@ -247,7 +251,14 @@
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#index-section-variable-attribute
  * clang: https://clang.llvm.org/docs/AttributeReference.html#section-declspec-allocate
  */
+#if defined(__ELF__)
 #define __section(S)                    __attribute__((__section__(#S)))
+#define __section_elf_macho(S,_,_)      __section(S)
+#elif defined(__MACH__)
+#define __section(S,s)                  __attribute__((__section__("__"#S","#s)))
+#define __section_elf_macho(_,S,s)      __section(S,s)
+#endif
+#define __section_data_once          __section_elf_macho(.data.once, DATA,once)
 
 /*
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-unused-function-attribute
@@ -270,5 +281,13 @@
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#index-weak-variable-attribute
  */
 #define __weak                          __attribute__((__weak__))
+
+#if defined(__MACH__)
+#define __sect_start(seg, sect) asm("section$start$__"#seg"$__"#sect)
+#define __sect_end(seg, sect) asm("section$end$__"#seg"$__"#sect)
+#else
+#define __sect_start(seg, sect)
+#define __sect_end(seg, sect)
+#endif
 
 #endif /* __LINUX_COMPILER_ATTRIBUTES_H */

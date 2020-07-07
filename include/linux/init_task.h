@@ -46,6 +46,6 @@ extern struct cred init_cred;
 #endif
 
 /* Attach to the thread_info data structure for proper alignment */
-#define __init_thread_info __attribute__((__section__(".data..init_thread_info")))
+#define __init_thread_info __section_elf_macho(.data..init_thread_info, DATA,init_thread_info)
 
 #endif
