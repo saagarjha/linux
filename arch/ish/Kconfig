@@ -3,6 +3,8 @@ config ISH
 	select GENERIC_ATOMIC64
 	select GENERIC_IRQ_SHOW
 	select THREAD_INFO_IN_TASK
+	select HAVE_FUTEX_CMPXCHG
+	select VMALLOC_BROKEN
 
 config 64BIT
 	bool
@@ -27,6 +29,4 @@ config NO_IOMEM
 config GENERIC_HWEIGHT
 	def_bool y
 config GENERIC_CSUM
-	def_bool y
-config GENERIC_CALIBRATE_DELAY
 	def_bool y

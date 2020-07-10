@@ -1,0 +1,6 @@
+config EARLY_PRINTK
+	bool "Early printk"
+	default y
+
+config ARCH_WANT_FRAME_POINTERS
+	default y if DEBUG_INFO

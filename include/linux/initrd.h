@@ -26,7 +26,7 @@ extern unsigned long phys_initrd_size;
 
 extern unsigned int real_root_dev;
 
-extern char __initramfs_start[];
+extern char __initramfs_start[] __sect_start(TEXT,init_ramfs);
 extern unsigned long __initramfs_size;
 
 void console_on_rootfs(void);

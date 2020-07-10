@@ -53,7 +53,11 @@ kbuild_objects()
 	else
 		# The objs are actually response files
 		for obj in ${KBUILD_VMLINUX_OBJS}; do
-			cat "${obj}"
+			if [[ "${obj}" == *.a ]]; then
+				cat "${obj}"
+			else
+				echo "${obj}"
+			fi
 		done
 		echo "${KBUILD_VMLINUX_LIBS}"
 	fi

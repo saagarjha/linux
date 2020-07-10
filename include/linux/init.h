@@ -12,9 +12,9 @@
 #define __noinitretpoline
 #endif
 
-#define __text_section(s) __section_elf_macho(.s.text, TEXT,s)
+#define __text_section(s) __section_elf_macho(.s.text, TEXT,s,regular,pure_instructions)
 #define __data_section(s) __section_elf_macho(.s.data, DATA,s)
-#define __const_section(s) __section_elf_macho(.s.rodata, TEXT,s##_const)
+#define __const_section(s) __section_elf_macho(.s.rodata, TEXT,const_##s)
 
 /* These macros are used to mark some functions or 
  * initialized data (doesn't apply to uninitialized data)
@@ -202,10 +202,10 @@ extern bool initcall_debug;
 #else
 #define ___define_initcall(fn, id, __sec) \
 	static initcall_t __initcall_##fn##id __used \
-		__section_elf_macho(__sec.init, DATA,__sec) = fn;
+		__section_elf_macho(.__sec.init, DATA,__sec) = fn;
 #endif
 
-#define __define_initcall(fn, id) ___define_initcall(fn, id, .initcall##id)
+#define __define_initcall(fn, id) ___define_initcall(fn, id, initcall##id)
 
 /*
  * Early initcalls run before initializing SMP.
@@ -244,7 +244,7 @@ extern bool initcall_debug;
 #define __exitcall(fn)						\
 	static exitcall_t __exitcall_##fn __exit_call = fn
 
-#define console_initcall(fn)	___define_initcall(fn,, .con_initcall)
+#define console_initcall(fn)	___define_initcall(fn,, con_initcall)
 
 struct obs_kernel_param {
 	const char *str;

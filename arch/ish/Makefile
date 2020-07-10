@@ -10,4 +10,8 @@ endif
 KBUILD_CFLAGS += -ferror-limit=0
 KBUILD_CPPFLAGS += -I$(srctree)/arch/x86/include
 
+USER_CFLAGS = -I$(srctree)/arch/ish/include
+export USER_CFLAGS
+
 core-y += arch/ish/kernel/
+head-y += arch/ish/kernel/sections.o

@@ -10,6 +10,9 @@ void __delay(unsigned long xloops)
 {
 	while (xloops--) {}
 }
+void calibrate_delay(void)
+{
+}
 
 void __init time_init(void)
 {

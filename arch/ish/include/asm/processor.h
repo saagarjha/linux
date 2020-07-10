@@ -2,6 +2,7 @@
 #define __ASM_ISH_PROCESSOR_H
 
 #include <asm/ptrace.h>
+#include <user/setjmp.h>
 
 struct task_struct;
 
@@ -22,10 +23,14 @@ static inline void release_thread(struct task_struct *task)
 
 struct thread_struct {
 	struct pt_regs regs;
+	jmp_buf kernel_regs;
+	struct {
+		void (*func)(void *);
+		void *arg;
+	} request;
 };
 #define INIT_THREAD \
 { \
-	.regs	= {}	\
 }
 
 #define TASK_SIZE 0xffff888000000000
@@ -36,8 +41,8 @@ struct thread_struct {
  */
 #define TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE / 3))
 
-#define KSTK_ESP(tsk)	0 // TODO
-#define KSTK_EIP(tsk)	0 // TODO
+#define KSTK_ESP(t)	((t)->thread.kernel_regs->jb_sp)
+#define KSTK_EIP(t)	((t)->thread.kernel_regs->jb_ip)
 #define task_pt_regs(t)	(&(t)->thread.regs)
 
 typedef struct {

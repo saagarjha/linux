@@ -253,10 +253,10 @@
  */
 #if defined(__ELF__)
 #define __section(S)                    __attribute__((__section__(#S)))
-#define __section_elf_macho(S,_,_)      __section(S)
+#define __section_elf_macho(S,...)      __section(S)
 #elif defined(__MACH__)
-#define __section(S,s)                  __attribute__((__section__("__"#S","#s)))
-#define __section_elf_macho(_,S,s)      __section(S,s)
+#define __section(S,s,...)                  __attribute__((__section__("__"#S",__"#s","#__VA_ARGS__)))
+#define __section_elf_macho(_,S,s,...)      __section(S,s, ##__VA_ARGS__)
 #endif
 #define __section_data_once          __section_elf_macho(.data.once, DATA,once)
 

@@ -15,6 +15,7 @@ struct thread_info {
 };
 #define INIT_THREAD_INFO(tsk) \
 { \
+	.addr_limit	= KERNEL_DS, \
 }
 
 #define TIF_SYSCALL_TRACE	0	/* syscall trace active */

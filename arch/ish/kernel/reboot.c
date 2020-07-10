@@ -3,8 +3,11 @@
 void (*pm_power_off)(void);
 EXPORT_SYMBOL(pm_power_off);
 
+extern void exit(int) __noreturn;
+
 void machine_halt(void)
 {
+	exit(0);
 }
 void machine_power_off(void)
 {

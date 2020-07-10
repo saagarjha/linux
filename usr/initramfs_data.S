@@ -22,13 +22,23 @@
   in the ELF header, as required by certain architectures.
 */
 
-.section .init.ramfs,"a"
+#ifdef __ELF__
+#define INIT_RAMFS .init.ramfs,"a"
+#define SYM(x) x
+#elif defined(__MACH__)
+#define INIT_RAMFS __TEXT,__init_ramfs
+#define SYM(x) _##x
+#endif
+
+.section INIT_RAMFS
 __irf_start:
 .incbin "usr/initramfs_inc_data"
 __irf_end:
+#ifdef __ELF__
 .section .init.ramfs.info,"a"
-.globl __initramfs_size
-__initramfs_size:
+#endif
+.globl SYM(__initramfs_size)
+SYM(__initramfs_size):
 #ifdef CONFIG_64BIT
 	.quad __irf_end - __irf_start
 #else
