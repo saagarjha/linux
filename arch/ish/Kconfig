@@ -26,6 +26,8 @@ config NO_DMA
 	def_bool y
 config NO_IOMEM
 	def_bool y
+config NO_VMALLOC
+	def_bool y
 config GENERIC_HWEIGHT
 	def_bool y
 config GENERIC_CSUM

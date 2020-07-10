@@ -733,7 +733,7 @@ unsigned long vmalloc_to_pfn(const void *addr);
 #define is_ioremap_addr(x) is_vmalloc_addr(x)
 #endif
 
-#ifdef CONFIG_MMU
+#ifdef CONFIG_VMALLOC
 extern bool is_vmalloc_addr(const void *x);
 extern int is_vmalloc_or_module_addr(const void *x);
 #else

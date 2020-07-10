@@ -91,7 +91,7 @@ extern void vm_unmap_ram(const void *mem, unsigned int count);
 extern void *vm_map_ram(struct page **pages, unsigned int count, int node);
 extern void vm_unmap_aliases(void);
 
-#ifdef CONFIG_MMU
+#ifdef CONFIG_VMALLOC
 extern void __init vmalloc_init(void);
 extern unsigned long vmalloc_nr_pages(void);
 #else
@@ -170,7 +170,7 @@ extern struct vm_struct *__get_vm_area_caller(unsigned long size,
 extern struct vm_struct *remove_vm_area(const void *addr);
 extern struct vm_struct *find_vm_area(const void *addr);
 
-#ifdef CONFIG_MMU
+#ifdef CONFIG_VMALLOC
 extern int map_kernel_range_noflush(unsigned long start, unsigned long size,
 				    pgprot_t prot, struct page **pages);
 int map_kernel_range(unsigned long start, unsigned long size, pgprot_t prot,
@@ -218,7 +218,7 @@ extern __init void vm_area_add_early(struct vm_struct *vm);
 extern __init void vm_area_register_early(struct vm_struct *vm, size_t align);
 
 #ifdef CONFIG_SMP
-# ifdef CONFIG_MMU
+# ifdef CONFIG_VMALLOC
 struct vm_struct **pcpu_get_vm_areas(const unsigned long *offsets,
 				     const size_t *sizes, int nr_vms,
 				     size_t align);
@@ -240,7 +240,7 @@ pcpu_free_vm_areas(struct vm_struct **vms, int nr_vms)
 # endif
 #endif
 
-#ifdef CONFIG_MMU
+#ifdef CONFIG_VMALLOC
 #define VMALLOC_TOTAL (VMALLOC_END - VMALLOC_START)
 #else
 #define VMALLOC_TOTAL 0UL

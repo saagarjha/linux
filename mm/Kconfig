@@ -872,4 +872,12 @@ config ARCH_HAS_HUGEPD
 config MAPPING_DIRTY_HELPERS
         bool
 
+config VMALLOC
+	bool
+	depends on MMU
+	depends on !NO_VMALLOC
+	default y
+	help
+	  Why the fuck would you want to turn this off
+
 endmenu
