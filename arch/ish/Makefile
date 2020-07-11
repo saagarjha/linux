@@ -13,5 +13,5 @@ KBUILD_CPPFLAGS += -I$(srctree)/arch/x86/include
 USER_CFLAGS = -I$(srctree)/arch/ish/include
 export USER_CFLAGS
 
-core-y += arch/ish/kernel/
+core-y += arch/ish/kernel/ arch/ish/mm/
 head-y += arch/ish/kernel/sections.o

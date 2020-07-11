@@ -33,7 +33,7 @@ struct thread_struct {
 { \
 }
 
-#define TASK_SIZE 0xffff888000000000
+#define TASK_SIZE 0xffffe000
 
 /*
  * This decides where the kernel will search for a free chunk of vm

@@ -15,7 +15,7 @@ void __init setup_arch(char **cmdline_p)
 	parse_early_param();
 
 	phys_size = 0x10000000;
-	ish_phys_base = (unsigned long) host_mmap(NULL, 0x10000000);
+	ish_phys_base = (unsigned long) host_mmap((void *) 0x200000000, 0x10000000);
 	memblock_add(__pa(ish_phys_base), phys_size);
 
 	zone_pfns[ZONE_NORMAL] = phys_size >> PAGE_SHIFT;

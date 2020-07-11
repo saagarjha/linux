@@ -3,7 +3,7 @@
 
 #include <asm/user.h>
 
-#define ELF_PLATFORM "x86_64"
+#define ELF_PLATFORM "i686"
 
 typedef unsigned long elf_greg_t;
 #define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t))
@@ -19,9 +19,9 @@ typedef struct user_i387_struct elf_fpregset_t;
 /*
  * These are used to set parameters in the core dumps.
  */
-#define ELF_CLASS	ELFCLASS64
+#define ELF_CLASS	ELFCLASS32
 #define ELF_DATA	ELFDATA2LSB
-#define ELF_ARCH	EM_X86_64
+#define ELF_ARCH	EM_386
 
 #define ELF_EXEC_PAGESIZE 4096
 

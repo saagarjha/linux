@@ -33,7 +33,8 @@ void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
 EXPORT_SYMBOL(start_thread);
 void flush_thread(void)
 {
-	__builtin_trap();
+	// TODO what is supposed to happen here?
+	WARN(1, "TODO flush_thread");
 }
 
 static void __thread_entry(void)
