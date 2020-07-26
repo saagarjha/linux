@@ -5,10 +5,19 @@ config ISH
 	select THREAD_INFO_IN_TASK
 	select HAVE_FUTEX_CMPXCHG
 	select VMALLOC_BROKEN
+	select HAVE_COPY_THREAD_TLS
 
+# ABI vore
 config 64BIT
 	bool
 	default y
+config COMPAT
+	def_bool y
+config IA32_EMULATION
+	def_bool y
+config SYSVIPC_COMPAT
+	def_bool y
+	depends on SYSVIPC
 
 config MMU
 	bool
@@ -32,3 +41,11 @@ config GENERIC_HWEIGHT
 	def_bool y
 config GENERIC_CSUM
 	def_bool y
+
+config ISH_MAIN
+	bool
+	default y
+
+config ISH_EMULATOR
+	string
+	default ishemu

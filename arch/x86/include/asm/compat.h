@@ -177,6 +177,7 @@ typedef struct user_regs_struct compat_elf_gregset_t;
 	(!!(task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT))
 #endif
 
+#ifndef CONFIG_ISH
 static inline void __user *arch_compat_alloc_user_space(long len)
 {
 	compat_uptr_t sp;
@@ -190,6 +191,7 @@ static inline void __user *arch_compat_alloc_user_space(long len)
 
 	return (void __user *)round_down(sp - len, 16);
 }
+#endif
 
 static inline bool in_x32_syscall(void)
 {

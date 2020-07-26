@@ -1,8 +1,10 @@
 #ifndef __ASM_ISH_PTRACE_H
 #define __ASM_ISH_PTRACE_H
 
+#include <emu/emu.h>
+
 struct pt_regs {
-	// TODO: fill in, maybe with struct cpu_state
+	struct emu emu;
 };
 
 // TODO: make these do the things they're supposed to do

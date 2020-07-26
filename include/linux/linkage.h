@@ -12,6 +12,12 @@
 #define ASM_NL		 ;
 #endif
 
+#ifdef __APPLE__
+#define SYM "_"
+#else
+#define SYM ""
+#endif
+
 #ifdef __cplusplus
 #define CPP_ASMLINKAGE extern "C"
 #else
@@ -24,21 +30,24 @@
 
 #ifndef cond_syscall
 #ifdef __ELF__
-#define __WEAK ".weak"
-#elif __APPLE__
-#define __WEAK ".weak_definition"
-#endif
 #define cond_syscall(x)	asm(				\
-	__WEAK " " __stringify(x) "\n\t"		\
+	".weaa " __stringify(x) "\n\t"		\
 	".set  " __stringify(x) ","			\
 		 __stringify(sys_ni_syscall))
+#elif __APPLE__
+#define cond_syscall(x) \
+	asmlinkage long __weak x(void) \
+	{ \
+		return -ENOSYS; \
+	}
+#endif
 #endif
 
 #ifndef SYSCALL_ALIAS
 #define SYSCALL_ALIAS(alias, name) asm(			\
-	".globl " __stringify(alias) "\n\t"		\
-	".set   " __stringify(alias) ","		\
-		  __stringify(name))
+	".globl " SYM __stringify(alias) "\n\t"		\
+	".set   " SYM __stringify(alias) ","		\
+		  SYM __stringify(name))
 #endif
 
 #define __page_aligned_data	__section(.data..page_aligned) __aligned(PAGE_SIZE)

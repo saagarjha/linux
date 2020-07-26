@@ -1,5 +1,1 @@
-#ifndef __ASM_UAPI_ISH_SIGCONTEXT_H
-#define __ASM_UAPI_ISH_SIGCONTEXT_H
-
-
-#endif
+#include "../../../../x86/include/uapi/asm/sigcontext.h"

@@ -11,9 +11,9 @@ typedef struct {
 #else
 #error "need to implement setjmp for your architecture"
 #endif
-} jmp_buf[1];
+} kjmp_buf[1];
 
-unsigned long setjmp(jmp_buf);
-void longjmp(jmp_buf, unsigned long);
+unsigned long ksetjmp(kjmp_buf);
+void klongjmp(kjmp_buf, unsigned long);
 
 #endif

@@ -25,6 +25,14 @@ void __init setup_arch(char **cmdline_p)
 	max_low_pfn = phys_size >> PAGE_SHIFT;
 }
 
+
+void run_kernel(void)
+{
+	current = &init_task;
+	start_kernel();
+}
+
+#ifdef CONFIG_ISH_MAIN
 int main(int argc, const char *argv[])
 {
 	int i;
@@ -33,8 +41,7 @@ int main(int argc, const char *argv[])
 			strcat(boot_command_line, " ");
 		strcat(boot_command_line, argv[i]);
 	}
-	current = &init_task;
-	start_kernel();
+	run_kernel();
 	return 0;
 }
-
+#endif

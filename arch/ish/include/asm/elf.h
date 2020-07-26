@@ -1,14 +1,17 @@
 #ifndef __ASM_ISH_ELF_H
 #define __ASM_ISH_ELF_H
 
-#include <asm/user.h>
+/* TODO: don't hard code ABIs like this? it sucks? seriously this entire file sucks */
 
 #define ELF_PLATFORM "i686"
 
-typedef unsigned long elf_greg_t;
-#define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t))
+typedef u32 elf_greg_t;
+/* #define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t)) */
+#define ELF_NGREG 16
 typedef elf_greg_t elf_gregset_t[ELF_NGREG];
-typedef struct user_i387_struct elf_fpregset_t;
+/* typedef struct user_i387_struct elf_fpregset_t; */
+#define ELF_NFPREG 27
+typedef elf_greg_t elf_fpregset_t[ELF_NFPREG];
 
 /*
  * This is used to ensure we don't load something for the wrong architecture.

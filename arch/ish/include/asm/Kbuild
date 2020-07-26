@@ -2,4 +2,8 @@ generic-y += cache.h
 generic-y += cmpxchg.h
 generic-y += extable.h
 generic-y += irqflags.h
+generic-y += local64.h
 generic-y += string.h
+generic-y += user.h
+
+generated-y += syscalls_32.h

@@ -472,3 +472,14 @@ COND_SYSCALL(setuid16);
 
 /* restartable sequence */
 COND_SYSCALL(rseq);
+
+/* TODO: delete */
+COND_SYSCALL_COMPAT(arch_prctl);
+COND_SYSCALL_COMPAT(rt_sigreturn);
+COND_SYSCALL_COMPAT(sigaction);
+COND_SYSCALL_COMPAT(sigreturn);
+COND_SYSCALL(get_thread_area);
+COND_SYSCALL(ioperm);
+COND_SYSCALL(iopl);
+COND_SYSCALL(set_thread_area);
+COND_SYSCALL(sigsuspend);

@@ -125,7 +125,7 @@ vmlinux_link()
 		${CC} ${CFLAGS_vmlinux}				\
 			-o ${output}				\
 			$(kbuild_objects -Wl,) ${@}		\
-			-lutil -lpthread
+			-lpthread
 		rm -f linux
 	else
 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\

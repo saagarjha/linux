@@ -23,7 +23,7 @@ static inline void release_thread(struct task_struct *task)
 
 struct thread_struct {
 	struct pt_regs regs;
-	jmp_buf kernel_regs;
+	kjmp_buf kernel_regs;
 	struct {
 		void (*func)(void *);
 		void *arg;

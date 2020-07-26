@@ -1,6 +1,7 @@
 #include <linux/mm.h>
 #include <linux/uaccess.h>
 
+/* TODO: put this in a header */
 extern int handle_page_fault(unsigned long address, int is_write, int *code_out);
 
 /* stolen from um */
@@ -34,6 +35,15 @@ pte_t *virt_to_pte(struct mm_struct *mm, unsigned long addr)
 	return pte_offset_kernel(pmd, addr);
 }
 
+/* exported for emulators to call */
+void *user_to_kernel(unsigned long virt)
+{
+	pte_t *pte = virt_to_pte(current->mm, virt);
+	if (pte == NULL)
+		return NULL;
+	return page_to_virt(pte_page(*pte)) + (virt & ~PAGE_MASK);
+}
+
 static pte_t *maybe_map(unsigned long virt, int is_write)
 {
 	pte_t *pte = virt_to_pte(current->mm, virt);
@@ -41,7 +51,6 @@ static pte_t *maybe_map(unsigned long virt, int is_write)
 
 	if ((pte == NULL) || !pte_present(*pte) ||
 	    (is_write && !pte_write(*pte))) {
-		WARN(1, "TODO handle page fault");
 		err = handle_page_fault(virt, is_write, &code_dummy);
 		if (err)
 			return NULL;

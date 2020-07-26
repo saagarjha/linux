@@ -116,6 +116,7 @@ extern char empty_zero_page[PAGE_SIZE];
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val(pte) })
 
-#define update_mmu_cache(vma, addr, ptep) do; while (0)
+// TODO! maybe don't
+#define update_mmu_cache(vma, addr, ptep) flush_tlb_page(vma, addr)
 
 #endif

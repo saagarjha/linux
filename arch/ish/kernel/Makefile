@@ -11,6 +11,7 @@ obj-y := \
 	process.o \
 	ptrace.o \
 	uaccess.o \
+	syscalls.o \
 
 obj-y += backtrace_user.o syscalls_user.o
 obj-y += setjmp-$(shell uname -m).o # TODO this is disgusting and won't make sense if you want to cross compile

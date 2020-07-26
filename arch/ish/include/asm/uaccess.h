@@ -7,6 +7,7 @@
 
 extern unsigned long raw_copy_from_user(void *to, const void __user *from, unsigned long n);
 extern unsigned long raw_copy_to_user(void __user *to, const void *from, unsigned long n);
+extern unsigned long raw_copy_in_user(void __user *to, const void __user *from, unsigned long n);
 extern long __strncpy_from_user(char *dst, const char __user *src, long count);
 extern long __strnlen_user(const void __user *str, long len);
 extern unsigned long __clear_user(void __user *mem, unsigned long len);
