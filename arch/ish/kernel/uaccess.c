@@ -36,12 +36,14 @@ pte_t *virt_to_pte(struct mm_struct *mm, unsigned long addr)
 }
 
 /* exported for emulators to call */
-void *user_to_kernel(unsigned long virt)
+void *user_to_kernel(unsigned long virt, int is_write)
 {
 	pte_t *pte = virt_to_pte(current->mm, virt);
-	if (pte == NULL)
+	if (pte == NULL || !pte_present(*pte))
 		return NULL;
-	return page_to_virt(pte_page(*pte)) + (virt & ~PAGE_MASK);
+	if (is_write && !pte_write(*pte))
+		return NULL;
+	return pfn_to_virt(pte_pfn(*pte)) + (virt & ~PAGE_MASK);
 }
 
 static pte_t *maybe_map(unsigned long virt, int is_write)

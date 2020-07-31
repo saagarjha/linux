@@ -6,6 +6,8 @@
 #include <linux/start_kernel.h>
 #include <user/user.h>
 
+char *empty_zero_page;
+
 void __init setup_arch(char **cmdline_p)
 {
 	size_t phys_size;
@@ -20,6 +22,8 @@ void __init setup_arch(char **cmdline_p)
 
 	zone_pfns[ZONE_NORMAL] = phys_size >> PAGE_SHIFT;
 	free_area_init(zone_pfns);
+
+	empty_zero_page = memblock_alloc_low(PAGE_SIZE, PAGE_SIZE);
 
 	min_low_pfn = 0;
 	max_low_pfn = phys_size >> PAGE_SHIFT;

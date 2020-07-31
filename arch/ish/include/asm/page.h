@@ -39,8 +39,10 @@ extern unsigned long ish_phys_base;
 
 #define pfn_valid(pfn)		((pfn) < max_mapnr)
 #define phys_to_pfn(p)		((p) >> PAGE_SHIFT)
-#define virt_to_page(virt)	pfn_to_page(phys_to_pfn(__pa(virt)))
 #define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+#define virt_to_page(virt)	pfn_to_page(phys_to_pfn(__pa(virt)))
+#define pfn_to_virt(pfn)	(__va(pfn_to_phys(pfn)))
+#define pfn_to_phys(pfn)	__pfn_to_phys(pfn)
 #define virt_addr_valid(virt)	pfn_valid(phys_to_pfn(__pa(virt)))
 
 #define copy_page(to, from)	memcpy((void *) (to), (void *) (from), PAGE_SIZE)

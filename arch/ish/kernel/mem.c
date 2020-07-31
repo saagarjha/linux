@@ -3,7 +3,6 @@
 #include <linux/mm.h>
 
 unsigned long ish_phys_base;
-char empty_zero_page[PAGE_SIZE];
 pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
 void __init mem_init(void)

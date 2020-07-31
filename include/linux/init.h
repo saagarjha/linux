@@ -140,7 +140,7 @@ static inline initcall_t initcall_from_entry(initcall_entry_t *entry)
 }
 #endif
 
-extern initcall_entry_t __con_initcall_start[] __sect_start(DATA,.con_initcall), __con_initcall_end[] __sect_end(DATA,.con_initcall);
+extern initcall_entry_t __con_initcall_start[] __sect_start(DATA,con_initcall), __con_initcall_end[] __sect_end(DATA,con_initcall);
 
 /* Used for contructor calls. */
 typedef void (*ctor_fn_t)(void);

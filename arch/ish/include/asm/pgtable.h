@@ -104,7 +104,7 @@ extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
  * ZERO_PAGE is a global shared page that is always zero: used
  * for zero-mapped memory areas etc..
  */
-extern char empty_zero_page[PAGE_SIZE];
+extern char *empty_zero_page;
 #define ZERO_PAGE(vaddr) virt_to_page(empty_zero_page)
 
 #include <asm-generic/memory_model.h>

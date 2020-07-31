@@ -23,7 +23,7 @@ KBUILD_CFLAGS += -ferror-limit=0
 USER_CFLAGS = -I$(srctree)/arch/ish/include
 export USER_CFLAGS
 
-core-y += arch/ish/kernel/ arch/ish/mm/ arch/ish/abi/
+core-y += arch/ish/kernel/ arch/ish/mm/ arch/ish/abi/ arch/ish/drivers/
 head-y += arch/ish/kernel/sections.o
 
 core-y += arch/ish/$(EMULATOR)/

@@ -83,21 +83,3 @@ __thread struct task_struct *current;
 
 unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
 
-// fuck, this should go in ishemu
-int current_pid(void)
-{
-	return current->pid;
-}
-void die(const char *message)
-{
-	panic(message);
-}
-void *mem_pt()
-{
-	return NULL;
-}
-extern void *user_to_kernel(unsigned long addr);
-void *mem_ptr(void *mem, unsigned int addr, int type)
-{
-	return user_to_kernel(addr);
-}
