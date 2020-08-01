@@ -1,15 +1,23 @@
 #ifndef __ASM_ISH_PTRACE_H
 #define __ASM_ISH_PTRACE_H
 
-#include <emu/emu.h>
-
 struct pt_regs {
-	struct emu emu;
+	unsigned long ax;
+	unsigned long bx;
+	unsigned long cx;
+	unsigned long dx;
+	unsigned long si;
+	unsigned long di;
+	unsigned long bp;
+	unsigned long sp;
+	unsigned long ip;
+
+	unsigned long segfault_addr;
+	int segfault_was_write;
 };
 
-// TODO: make these do the things they're supposed to do
-#define user_mode(regs) 0
-#define user_stack_pointer(regs) 0
-#define instruction_pointer(regs) 0
+#define user_mode(regs) 0 /* TODO */
+#define user_stack_pointer(regs) ((regs)->sp)
+#define instruction_pointer(regs) ((regs)->ip)
 
 #endif

@@ -3,6 +3,8 @@
 #include <linux/sched/task_stack.h>
 #include <linux/sched/debug.h>
 #include <asm/mmu_context.h>
+#include <asm/ptrace.h>
+#include <asm/syscall.h>
 #include <user/user.h>
 #include <emu/exec.h>
 
@@ -30,20 +32,55 @@ void show_stack(struct task_struct *task, unsigned long *stack,
 
 void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
 {
-	emu_start_thread(&regs->emu, eip, esp);
+	regs->ip = eip;
+	regs->sp = esp;
 }
 EXPORT_SYMBOL(start_thread);
 void flush_thread(void)
 {
-	emu_flush_thread(&task_pt_regs(current)->emu);
 }
+
+/* TODO put this in a header */
+extern int handle_page_fault(unsigned long address, int is_write, int *code_out);
 
 static void __user_thread(void)
 {
-	emu_run(&task_pt_regs(current)->emu);
-	// That should never return
-	__builtin_trap();
+	struct pt_regs *regs = task_pt_regs(current);
+	struct ksignal ksig;
+
+	for (;;) {
+		int interrupt = emu_run_to_interrupt(&current->thread.emu, task_pt_regs(current));
+
+		if (interrupt == 6) {
+			/* undefined instruction */
+			force_sig_fault(SIGILL, SI_KERNEL, (void __user *) regs->ip);
+		} else if (interrupt == 13 || interrupt == 14) {
+			/* GPF or page fault */
+			int code;
+			int err = handle_page_fault(regs->segfault_addr, regs->segfault_was_write, &code);
+			if (err != 0)
+				force_sig_fault(SIGSEGV, code, (void __user *) regs->segfault_addr);
+		} else if (interrupt == 0x80) {
+			/* syscall */
+			int syscall_nr = regs->ax;
+			unsigned long (*syscall)(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long) = sys_call_table[regs->ax];
+			regs->ax = syscall(regs->bx, regs->cx, regs->dx, regs->si, regs->di, regs->bp);
+			printk("%d syscall %d -> %d\n", current->pid, syscall_nr, regs->ax);
+		} else if (interrupt == 0x20) {
+			/* timer */
+		} else {
+			force_sig_fault(SIGSEGV, SI_KERNEL, 0);
+		}
+
+
+		if (get_signal(&ksig)) {
+			panic("the risk I took was calculated, but man, am I bad at math.");
+		}
+		/* TODO signal restarting */
+		restore_saved_sigmask();
+	}
 }
+
 static void __kernel_thread(void)
 {
 	current->thread.request.func(current->thread.request.arg);

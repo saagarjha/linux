@@ -27,28 +27,37 @@ static struct mmu_ops ishemu_ops = {
 
 extern unsigned long (*sys_call_table[])(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long);
 
-void noreturn emu_run(struct emu *emu)
+int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 {
-	for (;;) {
-		int interrupt = cpu_run_to_interrupt(&emu->cpu, &the_tlb);
-		unsigned long fault_addr = emu->cpu.eip;
-		int is_write = 0;
-		// TODO this sucks, use pt_regs instead
-		if (interrupt == INT_GPF) {
-			fault_addr = emu->cpu.segfault_addr;
-			is_write = emu->cpu.segfault_was_write;
-		}
-		if (interrupt == INT_SYSCALL) {
-			int syscall = emu->cpu.eax;
-			emu->cpu.eax = sys_call_table[emu->cpu.eax](emu->cpu.ebx, emu->cpu.ecx, emu->cpu.edx, emu->cpu.esi, emu->cpu.edi, emu->cpu.ebp);
-			printk("%d syscall %d -> %d\n", current_pid(), syscall, emu->cpu.eax);
-		}
-		if (interrupt == INT_GPF) {
-			/* TODO put this print somewhere better */
-			printk("%d segfault at %lx ip %px sp %px\n", current_pid(), fault_addr, emu->cpu.eip, emu->cpu.esp);
-		}
-		handle_interrupt(interrupt, fault_addr, is_write);
+	emu->cpu.eax = regs->ax;
+	emu->cpu.ebx = regs->bx;
+	emu->cpu.ecx = regs->cx;
+	emu->cpu.edx = regs->dx;
+	emu->cpu.esi = regs->si;
+	emu->cpu.edi = regs->di;
+	emu->cpu.ebp = regs->bp;
+	emu->cpu.esp = regs->sp;
+	emu->cpu.eip = regs->ip;
+
+	int interrupt = cpu_run_to_interrupt(&emu->cpu, &the_tlb);
+
+	regs->ax = emu->cpu.eax;
+	regs->bx = emu->cpu.ebx;
+	regs->cx = emu->cpu.ecx;
+	regs->dx = emu->cpu.edx;
+	regs->si = emu->cpu.esi;
+	regs->di = emu->cpu.edi;
+	regs->bp = emu->cpu.ebp;
+	regs->sp = emu->cpu.esp;
+	regs->ip = emu->cpu.eip;
+
+	if (interrupt == INT_GPF) {
+		regs->segfault_addr = emu->cpu.segfault_addr;
+		regs->segfault_was_write = emu->cpu.segfault_was_write;
+	} else {
+		regs->segfault_addr = regs->segfault_was_write = 0;
 	}
+	return interrupt;
 }
 
 void emu_flush_tlb(struct emu_mm *mm, unsigned long start, unsigned long end)
@@ -57,15 +66,6 @@ void emu_flush_tlb(struct emu_mm *mm, unsigned long start, unsigned long end)
 		return;
 	tlb_flush(&the_tlb);
 	jit_invalidate_range(mm->mmu.jit, start / PAGE_SIZE, (end + PAGE_SIZE - 1) / PAGE_SIZE /* TODO DIV_ROUND_UP? */);
-}
-
-void emu_start_thread(struct emu *emu, unsigned long eip, unsigned long esp)
-{
-	emu->cpu.eip = eip;
-	emu->cpu.esp = esp;
-}
-void emu_flush_thread(struct emu *emu)
-{
 }
 
 void emu_mmu_init(struct emu *emu, struct emu_mm *mm)

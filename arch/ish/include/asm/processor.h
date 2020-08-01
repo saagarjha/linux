@@ -2,6 +2,7 @@
 #define __ASM_ISH_PROCESSOR_H
 
 #include <asm/ptrace.h>
+#include <emu/emu.h>
 #include <user/setjmp.h>
 
 struct task_struct;
@@ -22,6 +23,7 @@ static inline void release_thread(struct task_struct *task)
 }
 
 struct thread_struct {
+	struct emu emu;
 	struct pt_regs regs;
 	kjmp_buf kernel_regs;
 	struct {

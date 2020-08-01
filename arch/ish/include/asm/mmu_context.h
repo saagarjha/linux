@@ -14,7 +14,7 @@ static inline void enter_lazy_tlb(struct mm_struct *mm,
 static inline int init_new_context(struct task_struct *tsk,
 			struct mm_struct *mm)
 {
-	emu_mmu_init(&task_pt_regs(tsk)->emu, &mm->context.emu_mm);
+	emu_mmu_init(&tsk->thread.emu, &mm->context.emu_mm);
 	return 0;
 }
 
@@ -32,7 +32,7 @@ static inline void switch_mm(struct mm_struct *prev,
 			struct mm_struct *next,
 			struct task_struct *tsk)
 {
-	emu_switch_mm(tsk ? &task_pt_regs(current)->emu : NULL, next ? &next->context.emu_mm : NULL);
+	emu_switch_mm(tsk ? &tsk->thread.emu : NULL, next ? &next->context.emu_mm : NULL);
 }
 
 static inline void activate_mm(struct mm_struct *prev_mm,
