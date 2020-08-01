@@ -1,4 +1,5 @@
 #include <linux/kallsyms.h>
+#include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/sched/debug.h>
@@ -45,11 +46,11 @@ extern int handle_page_fault(unsigned long address, int is_write, int *code_out)
 
 static void __user_thread(void)
 {
-	struct pt_regs *regs = task_pt_regs(current);
+	struct pt_regs *regs = current_pt_regs();
 	struct ksignal ksig;
 
 	for (;;) {
-		int interrupt = emu_run_to_interrupt(&current->thread.emu, task_pt_regs(current));
+		int interrupt = emu_run_to_interrupt(&current->thread.emu, current_pt_regs());
 
 		if (interrupt == 6) {
 			/* undefined instruction */
@@ -83,8 +84,8 @@ static void __user_thread(void)
 
 static void __kernel_thread(void)
 {
-	current->thread.request.func(current->thread.request.arg);
-	// If that returned, we did an execve, so go to userspace
+	if (current->thread.request.func)
+		current->thread.request.func(current->thread.request.arg);
 	__user_thread();
 }
 
@@ -92,14 +93,15 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
 		unsigned long arg, struct task_struct *p, unsigned long tls)
 {
 	// TODO: tls
+	*task_pt_regs(p) = *current_pt_regs();
+	task_pt_regs(p)->ax = 0;
 	KSTK_ESP(p) = (unsigned long) task_stack_page(p) + THREAD_SIZE - sizeof(void *);
+	KSTK_EIP(p) = (unsigned long) __kernel_thread;
+	p->thread.request.func = NULL;
 	if (unlikely(p->flags & PF_KTHREAD)) {
-		KSTK_EIP(p) = (unsigned long) __kernel_thread;
 		//printk("creating kernel thread %px to call %pS with %px\n", p->comm, p, usp, arg);
 		p->thread.request.func = (void (*)(void *)) usp;
 		p->thread.request.arg = (void (*)(void *)) arg;
-	} else {
-		panic("sorry, only kernel threads for now");
 	}
 	return 0;
 }
