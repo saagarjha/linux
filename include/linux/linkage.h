@@ -31,7 +31,7 @@
 #ifndef cond_syscall
 #ifdef __ELF__
 #define cond_syscall(x)	asm(				\
-	".weaa " __stringify(x) "\n\t"		\
+	".weak " __stringify(x) "\n\t"		\
 	".set  " __stringify(x) ","			\
 		 __stringify(sys_ni_syscall))
 #elif __APPLE__
