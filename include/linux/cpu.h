@@ -172,7 +172,7 @@ void cpu_startup_entry(enum cpuhp_state state);
 void cpu_idle_poll_ctrl(bool enable);
 
 /* Attach to any functions which should be considered cpuidle. */
-#define __cpuidle	__section_elf_macho(.cpuidle.text, TEXT,cpuidle)
+#define __cpuidle	__text_section(cpuidle)
 
 bool cpu_in_idle(unsigned long pc);
 

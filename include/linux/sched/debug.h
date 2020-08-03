@@ -43,7 +43,7 @@ extern void proc_sched_set_task(struct task_struct *p);
 #endif
 
 /* Attach to any functions which should be ignored in wchan output. */
-#define __sched		__section_elf_macho(.sched.text, TEXT,sched)
+#define __sched		__text_section(sched)
 
 /* Linker adds these: start and end of __sched functions */
 extern char __sched_text_start[] __sect_start(TEXT,sched), __sched_text_end[] __sect_end(TEXT,sched);

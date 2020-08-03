@@ -764,6 +764,6 @@ extern int arch_early_irq_init(void);
 # define __irq_entry	 __attribute__((__section__(".irqentry.text")))
 #endif
 
-#define __softirq_entry  __section_elf_macho(.softirqentry.text, TEXT,softirqentry)
+#define __softirq_entry  __text_section(softirqentry)
 
 #endif
