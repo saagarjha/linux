@@ -50,7 +50,7 @@
 #ifdef __APPLE__
 #define __alias(name, symbol)           ; __asm__(".globl _"#symbol"\n.set _"#symbol", _"#name)
 #else
-#define __alias(name, symbol)           __attribute__((alias(#_alias)))
+#define __alias(name, symbol)           __attribute__((alias(#symbol)))
 #endif
 
 /*

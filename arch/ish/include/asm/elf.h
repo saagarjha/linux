@@ -31,4 +31,8 @@ typedef elf_greg_t elf_fpregset_t[ELF_NFPREG];
 #define ELF_ET_DYN_BASE		(TASK_SIZE / 3 * 2)
 #define ELF_HWCAP		(0) // TODO
 
+#define ARCH_HAS_SETUP_ADDITIONAL_PAGES
+struct linux_binprm;
+int arch_setup_additional_pages(struct linux_binprm *, int);
+
 #endif

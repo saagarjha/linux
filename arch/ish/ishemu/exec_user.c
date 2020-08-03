@@ -52,10 +52,10 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	regs->ip = emu->cpu.eip;
 
 	if (interrupt == INT_GPF) {
-		regs->segfault_addr = emu->cpu.segfault_addr;
-		regs->segfault_was_write = emu->cpu.segfault_was_write;
+		regs->cr2 = emu->cpu.segfault_addr;
+		regs->error_code = emu->cpu.segfault_was_write << 1;
 	} else {
-		regs->segfault_addr = regs->segfault_was_write = 0;
+		regs->cr2 = regs->error_code = 0;
 	}
 	return interrupt;
 }

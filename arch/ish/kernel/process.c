@@ -9,6 +9,8 @@
 #include <user/user.h>
 #include <emu/exec.h>
 
+#include <asm/unistd.h>
+
 void show_regs(struct pt_regs *regs)
 {
 	printk("<regs would go here>\n");
@@ -44,41 +46,60 @@ void flush_thread(void)
 /* TODO put this in a header */
 extern int handle_page_fault(unsigned long address, int is_write, int *code_out);
 
+int show_unhandled_signals = 1; /* TODO this may not be the place */
+static void show_signal(struct task_struct *task, const char *desc, unsigned long addr) {
+	if (show_unhandled_signals) {
+		struct pt_regs *regs = task_pt_regs(task);
+		printk("%s[%d] %s addr:%lx ip:%lx sp:%lx\n", task->comm,
+		       task_pid_nr(task), desc, addr, regs->ip, regs->sp);
+	}
+}
+
 static void __user_thread(void)
 {
 	struct pt_regs *regs = current_pt_regs();
-	struct ksignal ksig;
 
 	for (;;) {
 		int interrupt = emu_run_to_interrupt(&current->thread.emu, current_pt_regs());
+		regs->trap_nr = interrupt;
+		regs->orig_ax = regs->ax;
 
 		if (interrupt == 6) {
 			/* undefined instruction */
+			if (show_unhandled_signals)
+				show_signal(current, "undefined instruction", regs->ip);
 			force_sig_fault(SIGILL, SI_KERNEL, (void __user *) regs->ip);
 		} else if (interrupt == 13 || interrupt == 14) {
 			/* GPF or page fault */
 			int code;
-			int err = handle_page_fault(regs->segfault_addr, regs->segfault_was_write, &code);
-			if (err != 0)
-				force_sig_fault(SIGSEGV, code, (void __user *) regs->segfault_addr);
+			int err = handle_page_fault(regs->cr2, regs->error_code & 2, &code);
+			if (err != 0) {
+				if (show_unhandled_signals)
+					show_signal(current, "page fault", regs->cr2);
+				force_sig_fault(SIGSEGV, code, (void __user *) regs->cr2);
+			}
 		} else if (interrupt == 0x80) {
 			/* syscall */
-			int syscall_nr = regs->ax;
-			unsigned long (*syscall)(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long) = sys_call_table[regs->ax];
-			regs->ax = syscall(regs->bx, regs->cx, regs->dx, regs->si, regs->di, regs->bp);
-			printk("%d syscall %d -> %d\n", current->pid, syscall_nr, regs->ax);
+			unsigned long (*syscall)(unsigned long, unsigned long,
+						 unsigned long, unsigned long,
+						 unsigned long, unsigned long)
+				= sys_call_table[regs->orig_ax];
+			if (regs->orig_ax == __NR_exit)
+				printk("%s[%d] exit %d", current->comm,
+				       current->pid, regs->bx);
+			regs->ax = syscall(regs->bx, regs->cx, regs->dx,
+					   regs->si, regs->di, regs->bp);
+			printk("%s[%d] syscall %d -> %d\n", current->comm,
+			       current->pid, regs->orig_ax, regs->ax);
 		} else if (interrupt == 0x20) {
 			/* timer */
 		} else {
+			if (show_unhandled_signals)
+				show_signal(current, "mysterious interrupt", interrupt);
 			force_sig_fault(SIGSEGV, SI_KERNEL, 0);
 		}
 
-
-		if (get_signal(&ksig)) {
-			panic("the risk I took was calculated, but man, am I bad at math.");
-		}
-		/* TODO signal restarting */
-		restore_saved_sigmask();
+		do_signal(regs);
 	}
 }
 

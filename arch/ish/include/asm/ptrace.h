@@ -11,9 +11,13 @@ struct pt_regs {
 	unsigned long bp;
 	unsigned long sp;
 	unsigned long ip;
+	unsigned long flags;
 
-	unsigned long segfault_addr;
-	int segfault_was_write;
+	unsigned long orig_ax;
+
+	unsigned long cr2;
+	unsigned long trap_nr;
+	unsigned long error_code;
 };
 
 #define user_mode(regs) 0 /* TODO */

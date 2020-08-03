@@ -6,6 +6,7 @@ config ISH
 	select HAVE_FUTEX_CMPXCHG
 	select VMALLOC_BROKEN
 	select HAVE_COPY_THREAD_TLS
+	select SYSCTL_EXCEPTION_TRACE
 
 # ABI vore
 config 64BIT

@@ -6,6 +6,7 @@ obj-y := \
 	mem.o \
 	reboot.o \
 	setup.o \
+	signal.o \
 	time.o \
 	trap.o \
 	process.o \
