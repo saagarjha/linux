@@ -139,7 +139,12 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 	return last;
 }
 
+void arch_cpu_idle(void)
+{
+	local_irq_enable();
+	host_pause();
+}
+
 __thread struct task_struct *current;
 
 unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
-

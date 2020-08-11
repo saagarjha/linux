@@ -8,10 +8,6 @@ void __const_udelay(unsigned long xloops)
 {
 	while (xloops--) {}
 }
-void __delay(unsigned long xloops)
-{
-	while (xloops--) {}
-}
 void calibrate_delay(void)
 {
 }
