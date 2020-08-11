@@ -1,8 +1,8 @@
 #include <linux/kallsyms.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>
-#include <linux/sched/task_stack.h>
 #include <linux/sched/debug.h>
+#include <linux/sched/task_stack.h>
 #include <asm/mmu_context.h>
 #include <asm/ptrace.h>
 #include <asm/syscall.h>
@@ -55,6 +55,14 @@ static void show_signal(struct task_struct *task, const char *desc, unsigned lon
 	}
 }
 
+static int log_syscalls;
+static int __init log_syscalls_enable(char *str)
+{
+	log_syscalls = 1;
+	return 0;
+}
+__setup("log_syscalls", log_syscalls_enable);
+
 static void __user_thread(void)
 {
 	struct pt_regs *regs = current_pt_regs();
@@ -84,13 +92,15 @@ static void __user_thread(void)
 						 unsigned long, unsigned long,
 						 unsigned long, unsigned long)
 				= sys_call_table[regs->orig_ax];
-			if (regs->orig_ax == __NR_exit)
+			if (log_syscalls && regs->orig_ax == __NR_exit)
 				printk("%s[%d] exit %d", current->comm,
 				       current->pid, regs->bx);
 			regs->ax = syscall(regs->bx, regs->cx, regs->dx,
 					   regs->si, regs->di, regs->bp);
-			printk("%s[%d] syscall %d -> %d\n", current->comm,
-			       current->pid, regs->orig_ax, regs->ax);
+			if (log_syscalls)
+				printk("%s[%d] syscall %d -> %d\n",
+				       current->comm, current->pid,
+				       regs->orig_ax, regs->ax);
 		} else if (interrupt == 0x20) {
 			/* timer */
 		} else {

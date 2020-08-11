@@ -14,6 +14,8 @@ void arch_local_irq_restore(unsigned long flags)
 	irqflags = flags;
 }
 
+extern void user_init_IRQ(void);
 void __init init_IRQ(void)
 {
+	user_init_IRQ();
 }

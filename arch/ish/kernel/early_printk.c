@@ -1,7 +1,7 @@
 #include <linux/console.h>
 #include <linux/init.h>
 
-#include <user/user.h>
+#include <user/fs.h>
 
 static void early_console_write(struct console *con, const char *s, unsigned int n)
 {
