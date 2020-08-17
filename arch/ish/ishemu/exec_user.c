@@ -72,13 +72,10 @@ void emu_mmu_init(struct emu *emu, struct emu_mm *mm)
 {
 	mm->mmu.jit = jit_new(&mm->mmu);
 	mm->mmu.ops = &ishemu_ops;
-	emu_mmu_activate(emu, mm);
-}
-void emu_mmu_activate(struct emu *emu, struct emu_mm *mm)
-{
-	emu->cpu.mmu = &mm->mmu;
 }
 void emu_switch_mm(struct emu *emu, struct emu_mm *mm) {
-	if (mm)
-		tlb_init(&the_tlb, &mm->mmu);
+	if (!mm)
+		return;
+	emu->cpu.mmu = &mm->mmu;
+	tlb_init(&the_tlb, &mm->mmu);
 }

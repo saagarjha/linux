@@ -32,13 +32,13 @@ static inline void switch_mm(struct mm_struct *prev,
 			struct mm_struct *next,
 			struct task_struct *tsk)
 {
-	emu_switch_mm(tsk ? &tsk->thread.emu : NULL, next ? &next->context.emu_mm : NULL);
+	emu_switch_mm(&tsk->thread.emu, next ? &next->context.emu_mm : NULL);
 }
 
 static inline void activate_mm(struct mm_struct *prev_mm,
 			       struct mm_struct *next_mm)
 {
-	switch_mm(prev_mm, next_mm, NULL);
+	switch_mm(prev_mm, next_mm, current);
 }
 
 #endif
