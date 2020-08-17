@@ -17,11 +17,14 @@
 #include <linux/mount.h>
 #include <linux/namei.h>
 #include "hostfs.h"
+#ifdef CONFIG_UM
 #include <init.h>
 #include <kern.h>
+#endif
 
 struct hostfs_inode_info {
 	int fd;
+	void *dir;
 	fmode_t mode;
 	struct inode vfs_inode;
 	struct mutex open_mutex;
@@ -42,6 +45,7 @@ static const struct inode_operations hostfs_iops;
 static const struct inode_operations hostfs_dir_iops;
 static const struct inode_operations hostfs_link_iops;
 
+#ifdef CONFIG_UM
 #ifndef MODULE
 static int __init hostfs_args(char *options, int *add)
 {
@@ -79,6 +83,7 @@ __uml_setup("hostfs=", hostfs_args,
 "    The only flag currently supported is 'append', which specifies that all\n"
 "    files opened by hostfs will be opened in append mode.\n\n"
 );
+#endif
 #endif
 
 static char *__dentry_name(struct dentry *dentry, char *name)
@@ -225,6 +230,7 @@ static struct inode *hostfs_alloc_inode(struct super_block *sb)
 	if (hi == NULL)
 		return NULL;
 	hi->fd = -1;
+	hi->dir = NULL;
 	hi->mode = 0;
 	inode_init_once(&hi->vfs_inode);
 	mutex_init(&hi->open_mutex);
@@ -238,6 +244,10 @@ static void hostfs_evict_inode(struct inode *inode)
 	if (HOSTFS_I(inode)->fd != -1) {
 		close_file(&HOSTFS_I(inode)->fd);
 		HOSTFS_I(inode)->fd = -1;
+		if (HOSTFS_I(inode)->dir != NULL) {
+			close_dir(HOSTFS_I(inode)->dir);
+			HOSTFS_I(inode)->dir = NULL;
+		}
 	}
 }
 
@@ -270,19 +280,24 @@ static const struct super_operations hostfs_sbops = {
 
 static int hostfs_readdir(struct file *file, struct dir_context *ctx)
 {
-	void *dir;
+	struct hostfs_inode_info *inode = FILE_HOSTFS_I(file);
 	char *name;
+	void *dir;
 	unsigned long long next, ino;
 	int error, len;
 	unsigned int type;
 
-	name = dentry_name(file->f_path.dentry);
-	if (name == NULL)
-		return -ENOMEM;
-	dir = open_dir(name, &error);
-	__putname(name);
-	if (dir == NULL)
-		return -error;
+	if (inode->dir == NULL) {
+		char *name = dentry_name(file->f_path.dentry);
+		if (name == NULL)
+			return -ENOMEM;
+		inode->dir = open_dir(name, &error);
+		__putname(name);
+		if (inode->dir == NULL)
+			return -error;
+	}
+	dir = inode->dir;
+
 	next = ctx->pos;
 	seek_dir(dir, next);
 	while ((name = read_dir(dir, &next, &ino, &len, &type)) != NULL) {
@@ -290,7 +305,6 @@ static int hostfs_readdir(struct file *file, struct dir_context *ctx)
 			break;
 		ctx->pos = next;
 	}
-	close_dir(dir);
 	return 0;
 }
 

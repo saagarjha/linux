@@ -9,6 +9,14 @@ config ISH
 	select SYSCTL_EXCEPTION_TRACE
 	select GENERIC_SCHED_CLOCK
 
+config ISH_MAIN
+	bool
+	default y
+
+config ISH_EMULATOR
+	string
+	default ishemu
+
 # ABI vore
 config 64BIT
 	bool
@@ -44,10 +52,5 @@ config GENERIC_HWEIGHT
 config GENERIC_CSUM
 	def_bool y
 
-config ISH_MAIN
-	bool
-	default y
-
-config ISH_EMULATOR
-	string
-	default ishemu
+config HOSTFS
+	bool "Host filesystem"

@@ -3,6 +3,8 @@
  * Licensed under the GPL
  */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
@@ -13,12 +15,18 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/vfs.h>
 #include <sys/syscall.h>
 #include "hostfs.h"
 #include <utime.h>
 
-static void stat64_to_hostfs(const struct stat64 *buf, struct hostfs_stat *p)
+#ifndef __APPLE__
+#include <sys/vfs.h>
+#endif
+#include <sys/mount.h>
+
+/* TODO ish errno */
+
+static void stat_to_hostfs(const struct stat *buf, struct hostfs_stat *p)
 {
 	p->ino = buf->st_ino;
 	p->mode = buf->st_mode;
@@ -34,21 +42,21 @@ static void stat64_to_hostfs(const struct stat64 *buf, struct hostfs_stat *p)
 	p->mtime.tv_nsec = 0;
 	p->blksize = buf->st_blksize;
 	p->blocks = buf->st_blocks;
-	p->maj = os_major(buf->st_rdev);
-	p->min = os_minor(buf->st_rdev);
+	p->maj = major(buf->st_rdev);
+	p->min = minor(buf->st_rdev);
 }
 
 int stat_file(const char *path, struct hostfs_stat *p, int fd)
 {
-	struct stat64 buf;
+	struct stat buf;
 
 	if (fd >= 0) {
-		if (fstat64(fd, &buf) < 0)
+		if (fstat(fd, &buf) < 0)
 			return -errno;
-	} else if (lstat64(path, &buf) < 0) {
+	} else if (lstat(path, &buf) < 0) {
 		return -errno;
 	}
-	stat64_to_hostfs(&buf, p);
+	stat_to_hostfs(&buf, p);
 	return 0;
 }
 
@@ -81,7 +89,7 @@ int open_file(char *path, int r, int w, int append)
 
 	if (append)
 		mode |= O_APPEND;
-	fd = open64(path, mode);
+	fd = open(path, mode);
 	if (fd < 0)
 		return -errno;
 	else return fd;
@@ -117,7 +125,7 @@ char *read_dir(void *stream, unsigned long long *pos_out,
 	*len_out = strlen(ent->d_name);
 	*ino_out = ent->d_ino;
 	*type_out = ent->d_type;
-	*pos_out = ent->d_off;
+	*pos_out = telldir(dir);
 	return ent->d_name;
 }
 
@@ -125,7 +133,7 @@ int read_file(int fd, unsigned long long *offset, char *buf, int len)
 {
 	int n;
 
-	n = pread64(fd, buf, len, *offset);
+	n = pread(fd, buf, len, *offset);
 	if (n < 0)
 		return -errno;
 	*offset += n;
@@ -136,7 +144,7 @@ int write_file(int fd, unsigned long long *offset, const char *buf, int len)
 {
 	int n;
 
-	n = pwrite64(fd, buf, len, *offset);
+	n = pwrite(fd, buf, len, *offset);
 	if (n < 0)
 		return -errno;
 	*offset += n;
@@ -147,7 +155,7 @@ int lseek_file(int fd, long long offset, int whence)
 {
 	int ret;
 
-	ret = lseek64(fd, offset, whence);
+	ret = lseek(fd, offset, whence);
 	if (ret < 0)
 		return -errno;
 	return 0;
@@ -156,9 +164,12 @@ int lseek_file(int fd, long long offset, int whence)
 int fsync_file(int fd, int datasync)
 {
 	int ret;
+	/* TODO linus doesn't like this kind of ifdef */
+#ifdef __linux__
 	if (datasync)
 		ret = fdatasync(fd);
 	else
+#endif
 		ret = fsync(fd);
 
 	if (ret < 0)
@@ -185,7 +196,7 @@ int file_create(char *name, int mode)
 {
 	int fd;
 
-	fd = open64(name, O_CREAT | O_RDWR, mode);
+	fd = open(name, O_CREAT | O_RDWR, mode);
 	if (fd < 0)
 		return -errno;
 	return fd;
@@ -318,7 +329,7 @@ int do_mknod(const char *file, int mode, unsigned int major, unsigned int minor)
 {
 	int err;
 
-	err = mknod(file, mode, os_makedev(major, minor));
+	err = mknod(file, mode, makedev(major, minor));
 	if (err)
 		return -errno;
 	return 0;
@@ -360,12 +371,14 @@ int rename2_file(char *from, char *to, unsigned int flags)
 {
 	int err;
 
-#ifndef SYS_renameat2
-#  ifdef __x86_64__
-#    define SYS_renameat2 316
-#  endif
-#  ifdef __i386__
-#    define SYS_renameat2 353
+#ifdef __linux__
+#  ifndef SYS_renameat2
+#    ifdef __x86_64__
+#      define SYS_renameat2 316
+#    endif
+#    ifdef __i386__
+#      define SYS_renameat2 353
+#    endif
 #  endif
 #endif
 
@@ -388,10 +401,10 @@ int do_statfs(char *root, long *bsize_out, long long *blocks_out,
 	      long long *files_out, long long *ffree_out,
 	      void *fsid_out, int fsid_size, long *namelen_out)
 {
-	struct statfs64 buf;
+	struct statfs buf;
 	int err;
 
-	err = statfs64(root, &buf);
+	err = statfs(root, &buf);
 	if (err < 0)
 		return -errno;
 
@@ -404,7 +417,11 @@ int do_statfs(char *root, long *bsize_out, long long *blocks_out,
 	memcpy(fsid_out, &buf.f_fsid,
 	       sizeof(buf.f_fsid) > fsid_size ? fsid_size :
 	       sizeof(buf.f_fsid));
+#ifdef __linux__
 	*namelen_out = buf.f_namelen;
+#else
+	*namelen_out = NAME_MAX;
+#endif
 
 	return 0;
 }

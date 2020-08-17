@@ -2,7 +2,9 @@
 #ifndef __UM_FS_HOSTFS
 #define __UM_FS_HOSTFS
 
+#ifdef CONFIG_UM
 #include <os.h>
+#endif
 
 /*
  * These are exactly the same definitions as in fs.h, but the names are
@@ -47,7 +49,7 @@ struct hostfs_iattr {
 	unsigned short		ia_mode;
 	uid_t			ia_uid;
 	gid_t			ia_gid;
-	loff_t			ia_size;
+	off_t			ia_size;
 	struct hostfs_timespec	ia_atime;
 	struct hostfs_timespec	ia_mtime;
 	struct hostfs_timespec	ia_ctime;
