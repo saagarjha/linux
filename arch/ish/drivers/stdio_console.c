@@ -105,7 +105,7 @@ static __init int stdio_init(void)
 	stdio_driver->driver_name = "stdio";
 	stdio_driver->name = "tty";
 	stdio_driver->major = TTY_MAJOR;
-	stdio_driver->minor_start = 0;
+	stdio_driver->minor_start = 1;
 	stdio_driver->type = TTY_DRIVER_TYPE_CONSOLE;
 	stdio_driver->subtype = SYSTEM_TYPE_CONSOLE;
 	stdio_driver->init_termios = tty_std_termios;
@@ -120,5 +120,3 @@ static __init int stdio_init(void)
 	return 0;
 }
 late_initcall(stdio_init);
-
-// TODO do we need unregister_console? probably not
