@@ -1,4 +1,5 @@
 #include <linux/kallsyms.h>
+#include <linux/moduleparam.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
@@ -6,8 +7,8 @@
 #include <asm/mmu_context.h>
 #include <asm/ptrace.h>
 #include <asm/syscall.h>
-#include <user/user.h>
 #include <emu/exec.h>
+#include <user/user.h>
 
 #include <asm/unistd.h>
 
@@ -55,13 +56,8 @@ static void show_signal(struct task_struct *task, const char *desc, unsigned lon
 	}
 }
 
-static int log_syscalls;
-static int __init log_syscalls_enable(char *str)
-{
-	log_syscalls = 1;
-	return 0;
-}
-__setup("log_syscalls", log_syscalls_enable);
+static bool log_syscalls;
+module_param(log_syscalls, bool, 0660);
 
 static void __user_thread(void)
 {
@@ -84,6 +80,7 @@ static void __user_thread(void)
 			if (err != 0) {
 				if (show_unhandled_signals)
 					show_signal(current, "page fault", regs->cr2);
+
 				force_sig_fault(SIGSEGV, code, (void __user *) regs->cr2);
 			}
 		} else if (interrupt == 0x80) {
