@@ -4,6 +4,13 @@
 #include <time.h>
 #include <unistd.h>
 
+/* TODO return sane errnos */
+
+int host_open(const char *file, int flags)
+{
+	return open(file, flags);
+}
+
 ssize_t host_write(int fd, void *data, size_t len)
 {
 	return write(fd, data, len);
@@ -11,6 +18,14 @@ ssize_t host_write(int fd, void *data, size_t len)
 ssize_t host_read(int fd, void *data, size_t len)
 {
 	return read(fd, data, len);
+}
+ssize_t host_pwrite(int fd, void *data, size_t len, off_t offset)
+{
+	return pwrite(fd, data, len, offset);
+}
+ssize_t host_pread(int fd, void *data, size_t len, off_t offset)
+{
+	return pread(fd, data, len, offset);
 }
 
 int fd_set_nonblock(int fd)
