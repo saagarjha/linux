@@ -70,21 +70,23 @@ static void __user_thread(void)
 
 		if (interrupt == 6) {
 			/* undefined instruction */
-			if (show_unhandled_signals)
-				show_signal(current, "undefined instruction", regs->ip);
+			show_signal(current, "undefined instruction", regs->ip);
 			force_sig_fault(SIGILL, SI_KERNEL, (void __user *) regs->ip);
 		} else if (interrupt == 13 || interrupt == 14) {
 			/* GPF or page fault */
 			int code;
 			int err = handle_page_fault(regs->cr2, regs->error_code & 2, &code);
 			if (err != 0) {
-				if (show_unhandled_signals)
-					show_signal(current, "page fault", regs->cr2);
-
+				show_signal(current, "page fault", regs->cr2);
 				force_sig_fault(SIGSEGV, code, (void __user *) regs->cr2);
 			}
 		} else if (interrupt == 0x80) {
 			/* syscall */
+			if (regs->orig_ax > NR_syscalls) {
+				show_signal(current, "syscall out of range", regs->orig_ax);
+				force_sig_fault(SIGSYS, SI_KERNEL, 0);
+				goto signal;
+			}
 			unsigned long (*syscall)(unsigned long, unsigned long,
 						 unsigned long, unsigned long,
 						 unsigned long, unsigned long)
@@ -101,11 +103,11 @@ static void __user_thread(void)
 		} else if (interrupt == 0x20) {
 			/* timer */
 		} else {
-			if (show_unhandled_signals)
-				show_signal(current, "mysterious interrupt", interrupt);
+			show_signal(current, "mysterious interrupt", interrupt);
 			force_sig_fault(SIGSEGV, SI_KERNEL, 0);
 		}
 
+signal:
 		do_signal(regs);
 	}
 }
