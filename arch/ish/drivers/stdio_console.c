@@ -2,6 +2,7 @@
 #include <linux/init.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
+#include <linux/sysrq.h>
 
 #include <user/fs.h>
 
@@ -43,9 +44,22 @@ static const struct tty_operations stdio_ops = {
 static void stdio_readable(int fd, int types, void *data)
 {
 	struct tty_port *port = data;
-	char c;
-	while (host_read(fd, &c, 1) > 0)
+	char c, rq;
+	while (host_read(fd, &c, 1) > 0) {
+		rq = 0;
+		// meta => sysrq
+		if (c == '\x1b') {
+			if (host_read(fd, &rq, 1) > 0) {
+				if ((rq >= 'a' && rq <= 'z') || (rq >= '0' && rq <= '9')) {
+					__handle_sysrq(rq, false);
+					continue;
+				}
+			}
+		}
 		tty_insert_flip_char(port, c, TTY_NORMAL);
+		if (rq)
+			tty_insert_flip_char(port, rq, TTY_NORMAL);
+	}
 	tty_flip_buffer_push(port);
 }
 
