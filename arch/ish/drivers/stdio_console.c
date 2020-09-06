@@ -118,6 +118,7 @@ static __init int stdio_init(void)
 
 	stdio_driver->driver_name = "stdio";
 	stdio_driver->name = "tty";
+	stdio_driver->name_base = 1;
 	stdio_driver->major = TTY_MAJOR;
 	stdio_driver->minor_start = 1;
 	stdio_driver->type = TTY_DRIVER_TYPE_CONSOLE;
