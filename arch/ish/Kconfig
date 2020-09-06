@@ -8,6 +8,7 @@ config ISH
 	select HAVE_COPY_THREAD_TLS
 	select SYSCTL_EXCEPTION_TRACE
 	select GENERIC_SCHED_CLOCK
+	select GENERIC_CPU_DEVICES
 
 config ISH_MAIN
 	bool
