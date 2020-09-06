@@ -33,6 +33,7 @@ typedef struct page *pgtable_t;
 #define __pgprot(x)	((pgprot_t) { (x) })
 
 extern unsigned long ish_phys_base;
+extern unsigned long ish_phys_size;
 #define __pa(virt)	((unsigned long) (virt) - ish_phys_base)
 #define __va(phys)	((void *) ((unsigned long) (phys) + ish_phys_base))
 #define PAGE_OFFSET (ish_phys_base)

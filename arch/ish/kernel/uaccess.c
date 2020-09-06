@@ -238,3 +238,12 @@ long __strnlen_user(const void __user *str, long len)
 	return 0;
 }
 EXPORT_SYMBOL(__strnlen_user);
+
+bool copy_from_kernel_nofault_allowed(const void *unsafe_src, size_t size)
+{
+	if ((unsigned long) unsafe_src < ish_phys_base)
+		return false;
+	if ((unsigned long) unsafe_src + size > ish_phys_base + ish_phys_size)
+		return false;
+	return true;
+}

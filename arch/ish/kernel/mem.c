@@ -3,6 +3,7 @@
 #include <linux/mm.h>
 
 unsigned long ish_phys_base;
+unsigned long ish_phys_size;
 pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
 void __init mem_init(void)

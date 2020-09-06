@@ -10,23 +10,22 @@ char *empty_zero_page;
 
 void __init setup_arch(char **cmdline_p)
 {
-	size_t phys_size;
 	unsigned long zone_pfns[MAX_NR_ZONES] = {};
 
 	*cmdline_p = boot_command_line;
 	parse_early_param();
 
-	phys_size = 0x10000000;
-	ish_phys_base = (unsigned long) host_mmap((void *) 0x200000000, 0x10000000);
-	memblock_add(__pa(ish_phys_base), phys_size);
+	ish_phys_size = 0x10000000;
+	ish_phys_base = (unsigned long) host_mmap((void *) 0x200000000, ish_phys_size);
+	memblock_add(__pa(ish_phys_base), ish_phys_size);
 
-	zone_pfns[ZONE_NORMAL] = phys_size >> PAGE_SHIFT;
+	zone_pfns[ZONE_NORMAL] = ish_phys_size >> PAGE_SHIFT;
 	free_area_init(zone_pfns);
 
 	empty_zero_page = memblock_alloc_low(PAGE_SIZE, PAGE_SIZE);
 
 	min_low_pfn = 0;
-	max_low_pfn = phys_size >> PAGE_SHIFT;
+	max_low_pfn = ish_phys_size >> PAGE_SHIFT;
 }
 
 
