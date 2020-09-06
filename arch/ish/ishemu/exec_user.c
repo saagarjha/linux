@@ -38,6 +38,7 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	emu->cpu.ebp = regs->bp;
 	emu->cpu.esp = regs->sp;
 	emu->cpu.eip = regs->ip;
+	emu->cpu.tls_ptr = regs->tls;
 
 	int interrupt = cpu_run_to_interrupt(&emu->cpu, &the_tlb);
 

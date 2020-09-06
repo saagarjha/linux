@@ -13,6 +13,7 @@ struct pt_regs {
 	unsigned long ip;
 	unsigned long flags;
 
+	unsigned long tls;
 	unsigned long orig_ax;
 
 	unsigned long cr2;
