@@ -4,7 +4,12 @@
 void *host_mmap(void *addr, size_t len);
 uint64_t host_monotonic_nanos(void);
 
-void walk_backtrace(void (*cb)(void *, unsigned long, char *), void *data);
+struct sym_info {
+	const char *module;
+	const char *symbol;
+	void *symbol_addr;
+};
+int lookup_symbol(void *addr, struct sym_info *out);
 
 void host_pause(void);
 

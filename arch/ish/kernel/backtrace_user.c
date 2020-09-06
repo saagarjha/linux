@@ -1,14 +1,21 @@
-#include <execinfo.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 
-void walk_backtrace(void (*cb)(void *, unsigned long, char *), void *data)
+#include <user/user.h>
+
+int lookup_symbol(void *addr, struct sym_info *out)
 {
-	void *stack[128];
-	int stack_size = backtrace(stack, 128);
-	char **stack_syms = backtrace_symbols(stack, stack_size);
-	int i;
-	for (i = 0; i < stack_size; i++) {
-		cb(data, (unsigned long) stack[i], stack_syms[i]);
+	Dl_info info;
+	if (dladdr(addr, &info) == 0)
+		return 0;
+	out->symbol = info.dli_sname;
+	out->symbol_addr = info.dli_saddr;
+
+	out->module = strrchr(info.dli_fname, '/');
+	if (out->module == NULL) {
+		out->module = info.dli_fname;
+	} else {
+		out->module++;
 	}
-	free(stack_syms);
+	return 1;
 }
