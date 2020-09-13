@@ -37,3 +37,5 @@ vmlinux: ../../build/libish_emu.a
 
 archheaders:
 	$(Q)$(MAKE) $(build)=arch/ish/syscalls all
+
+UTS_MACHINE := i386
