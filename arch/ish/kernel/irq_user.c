@@ -1,94 +1,73 @@
-/* jank ass pile of garbage */
 #include <fcntl.h>
-#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <sys/event.h>
 #include <unistd.h>
-#include <user/fs.h>
 
-static int poller;
+#include <user/fs.h>
+#include <user/irq.h>
+#include <user/poll.h>
+
+extern void handle_irq(int irq);
+
 static pthread_t irq_thread;
 
-static int poke;
-static pthread_mutex_t poke_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t poked = PTHREAD_COND_INITIALIZER;
+/* TODO @smp: make something per-cpu */
+static int irq_num = -1;
+static pthread_mutex_t irq_ack_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t irq_acked = PTHREAD_COND_INITIALIZER;
 
-struct fd_callback {
-	fd_callback_t cb;
-	void *data;
-};
+static void sigusr1_handler(int signal)
+{
+	int irq = irq_num;
+	pthread_mutex_lock(&irq_ack_lock);
+	irq_num = -1;
+	pthread_cond_broadcast(&irq_acked);
+	pthread_mutex_unlock(&irq_ack_lock);
 
-int fd_add_listener(int fd, int types, fd_callback_t callback, void *data)
+	handle_irq(irq);
+}
+
+void trigger_irq(int irq)
+{
+	irq_num = irq;
+
+	pthread_kill(irq_thread, SIGUSR1);
+	pthread_mutex_lock(&irq_ack_lock);
+	while (irq_num != -1)
+		pthread_cond_wait(&irq_acked, &irq_ack_lock);
+	pthread_mutex_unlock(&irq_ack_lock);
+
+	irq_num = -1;
+}
+
+static struct real_poll poller;
+
+int fd_add_irq(int fd, int types, int irq)
 {
 	int err;
-	int flags;
-	struct fd_callback *cb;
-	struct kevent event;
-
-	flags = fcntl(fd, F_GETFL);
-	if (flags < 0)
+	if (real_poll_update(&poller, fd, types, (void *) (uintptr_t) irq) < 0)
 		return -1;
-	err = fcntl(fd, F_SETFL, flags | O_ASYNC);
-	if (err < 0)
-		return -1;
-
-	cb = calloc(1, sizeof(struct fd_callback));
-	cb->cb = callback;
-	cb->data = data;
-	event.ident = fd;
-	event.filter = EVFILT_READ;
-	event.flags = EV_ADD;
-	event.udata = cb;
-	err = kevent(poller, &event, 1, NULL, 0, NULL);
-	if (err < 0) {
-		free(cb);
-		return -1;
-	}
 	return 0;
 }
 
-static void sigio_handler(int sigio)
+static void *poll_thread(void *dummy)
 {
-	struct kevent ev;
-	struct timespec zero = {};
+	struct real_poll_event event;
 	int err;
-	while ((err = kevent(poller, NULL, 0, &ev, 1, &zero)) > 0) {
-		struct fd_callback *cb = ev.udata;
-		cb->cb(ev.ident, LISTEN_READ, cb->data);
-	}
-
-	/* ack the poke */
-	pthread_mutex_lock(&poke_lock);
-	poke = 0;
-	pthread_cond_broadcast(&poked);
-	pthread_mutex_unlock(&poke_lock);
-}
-
-static void *poll_to_sigio_thread(void *null)
-{
-	sigset_t all_sigs;
-	sigfillset(&all_sigs);
-	pthread_sigmask(SIG_BLOCK, &all_sigs, NULL);
 	for (;;) {
-		struct kevent dummy;
-		kevent(poller, NULL, 0, &dummy, 1, NULL);
-		pthread_mutex_lock(&poke_lock);
-		poke = 1;
-		pthread_kill(irq_thread, SIGIO);
-		while (poke)
-			pthread_cond_wait(&poked, &poke_lock);
-		pthread_mutex_unlock(&poke_lock);
+		err = real_poll_wait(&poller, &event, 1, NULL);
+		trigger_irq((int) rpe_data(&event));
 	}
 }
 
 void user_init_IRQ(void)
 {
-	signal(SIGIO, sigio_handler);
+	signal(SIGUSR1, sigusr1_handler);
 	irq_thread = pthread_self();
-	poller = kqueue();
+
+	real_poll_init(&poller);
 	pthread_t t;
-	pthread_create(&t, NULL, poll_to_sigio_thread, NULL);
+	pthread_create(&t, NULL, poll_thread, NULL);
 	pthread_detach(t);
 }

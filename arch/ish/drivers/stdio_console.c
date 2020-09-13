@@ -1,8 +1,11 @@
 #include <linux/console.h>
 #include <linux/init.h>
+#include <linux/interrupt.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
 #include <linux/sysrq.h>
+#include <asm/irq.h>
+#include <asm/poll.h>
 
 #include <user/fs.h>
 
@@ -43,15 +46,15 @@ static const struct tty_operations stdio_ops = {
 	.write_room = stdio_tty_write_room,
 };
 
-static void stdio_readable(int fd, int types, void *data)
+static irqreturn_t stdin_irq(int irq, void *dev_id)
 {
-	struct tty_port *port = data;
+	struct tty_port *port = dev_id;
 	char c, rq;
-	while (host_read(fd, &c, 1) > 0) {
+	while (host_read(STDIN_FD, &c, 1) > 0) {
 		rq = 0;
 		// meta => sysrq
 		if (c == '\x1b') {
-			if (host_read(fd, &rq, 1) > 0) {
+			if (host_read(STDIN_FD, &rq, 1) > 0) {
 				if ((rq >= 'a' && rq <= 'z') || (rq >= '0' && rq <= '9')) {
 					__handle_sysrq(rq, false);
 					continue;
@@ -63,6 +66,7 @@ static void stdio_readable(int fd, int types, void *data)
 			tty_insert_flip_char(port, rq, TTY_NORMAL);
 	}
 	tty_flip_buffer_push(port);
+	return IRQ_HANDLED;
 }
 
 static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
@@ -71,7 +75,7 @@ static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
 		/* TODO: see if we can't get better error codes returned from these */
 		if (fd_set_nonblock(STDIN_FD) < 0)
 			return -EINVAL;
-		if (fd_add_listener(STDIN_FD, LISTEN_READ, stdio_readable, port) < 0)
+		if (fd_add_irq(STDIN_FD, POLLIN, STDIN_IRQ) < 0)
 			return -EINVAL;
 		port->client_data = (void *) 1;
 
@@ -129,10 +133,14 @@ static struct tty_operations stupid_ops = {
 
 static __init int stdio_init(void)
 {
-	int i;
+	int i, err;
 
 	tty_port_init(&stdio_port);
 	stdio_port.ops = &stdio_port_ops;
+
+	err = request_irq(STDIN_IRQ, stdin_irq, 0, "stdin", &stdio_port);
+	if (err)
+		pr_err("stdin: failed to request_irq: %d\n", err);
 
 	stdio_driver = alloc_tty_driver(1); /* TODO more than 1 */
 	if (!stdio_driver)
@@ -151,7 +159,7 @@ static __init int stdio_init(void)
 	tty_port_link_device(&stdio_port, stdio_driver, 0);
 
 	if (tty_register_driver(stdio_driver))
-		panic("failed to register stdio driver");
+		pr_err("stdio: failed to tty_register_driver");
 
 	stupid_driver = alloc_tty_driver(5);
 	stupid_driver->driver_name = "stupid";
@@ -160,9 +168,8 @@ static __init int stdio_init(void)
 	stupid_driver->major = TTY_MAJOR;
 	stupid_driver->minor_start = 2;
 	tty_set_operations(stupid_driver, &stupid_ops);
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 5; i++)
 		tty_port_link_device(&stupid_port, stupid_driver, i);
-	}
 	if (tty_register_driver(stupid_driver))
 		panic("failed to register stupid driver");
 

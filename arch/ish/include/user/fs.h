@@ -13,8 +13,6 @@ int host_open(const char *path, int flags);
 
 void termio_make_raw(int fd);
 
-#define LISTEN_READ 1
-typedef void (*fd_callback_t)(int fd, int types, void *data);
-int fd_add_listener(int fd, int types, fd_callback_t callback, void *data);
+int fd_add_irq(int fd, int types, int irq);
 
 #endif

@@ -66,3 +66,10 @@ uint64_t host_monotonic_nanos(void)
 	return ts.tv_sec * 1000000000 + ts.tv_nsec;
 #endif
 }
+
+uint64_t host_unix_nanos(void)
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return ts.tv_sec * 1000000000 + ts.tv_nsec;
+}

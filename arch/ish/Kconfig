@@ -9,6 +9,7 @@ config ISH
 	select SYSCTL_EXCEPTION_TRACE
 	select GENERIC_SCHED_CLOCK
 	select GENERIC_CPU_DEVICES
+	select GENERIC_CLOCKEVENTS
 
 config ISH_MAIN
 	bool
@@ -39,7 +40,7 @@ config MMU
 	default y
 
 config HZ
-	int
+	int "HZ"
 	default 100
 
 config PGTABLE_LEVELS

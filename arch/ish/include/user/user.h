@@ -3,6 +3,7 @@
 
 void *host_mmap(void *addr, size_t len);
 uint64_t host_monotonic_nanos(void);
+uint64_t host_unix_nanos(void);
 
 struct sym_info {
 	const char *module;
