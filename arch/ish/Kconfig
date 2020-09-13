@@ -18,6 +18,10 @@ config ISH_EMULATOR
 	string
 	default ishemu
 
+config ARCH_RANDOM
+	def_bool y
+	prompt "Host random number generator" if EXPERT
+
 # ABI vore
 config 64BIT
 	bool
