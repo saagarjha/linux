@@ -8,6 +8,8 @@
 
 static struct tty_driver *stdio_driver;
 struct tty_port stdio_port;
+static struct tty_driver *stupid_driver;
+struct tty_port stupid_port;
 
 static int stdio_tty_open(struct tty_struct *tty, struct file *filp)
 {
@@ -107,8 +109,28 @@ static struct console stdio_console = {
 	.index = -1,
 };
 
+DECLARE_WAIT_QUEUE_HEAD(hang_queue);
+
+static int stupid_open_hang(struct tty_struct *tty, struct file *filp)
+{
+	DEFINE_WAIT(wait);
+	tty->port = &stupid_port;
+	prepare_to_wait(&hang_queue, &wait, TASK_INTERRUPTIBLE);
+	while (!signal_pending(current)) {
+		schedule();
+	}
+	finish_wait(&hang_queue, &wait);
+	return -EINTR;
+}
+
+static struct tty_operations stupid_ops = {
+	.open = stupid_open_hang,
+};
+
 static __init int stdio_init(void)
 {
+	int i;
+
 	tty_port_init(&stdio_port);
 	stdio_port.ops = &stdio_port_ops;
 
@@ -130,6 +152,19 @@ static __init int stdio_init(void)
 
 	if (tty_register_driver(stdio_driver))
 		panic("failed to register stdio driver");
+
+	stupid_driver = alloc_tty_driver(5);
+	stupid_driver->driver_name = "stupid";
+	stupid_driver->name = "tty";
+	stupid_driver->name_base = 2;
+	stupid_driver->major = TTY_MAJOR;
+	stupid_driver->minor_start = 2;
+	tty_set_operations(stupid_driver, &stupid_ops);
+	for (i = 0; i < 5; i++) {
+		tty_port_link_device(&stupid_port, stupid_driver, i);
+	}
+	if (tty_register_driver(stupid_driver))
+		panic("failed to register stupid driver");
 
 	register_console(&stdio_console);
 	return 0;
