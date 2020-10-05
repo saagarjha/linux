@@ -1,4 +1,5 @@
 #include <linux/mm.h>
+#include <linux/slab.h>
 #include <linux/uaccess.h>
 
 /* TODO: put this in a header */
@@ -163,6 +164,22 @@ unsigned long raw_copy_to_user(void __user *to, const void *from, unsigned long 
 	return buffer_op((unsigned long) to, n, 1, copy_chunk_to_user, &from);
 }
 EXPORT_SYMBOL(raw_copy_to_user);
+
+unsigned long raw_copy_in_user(void __user *to, const void __user *from, unsigned long n)
+{
+	void *buf = kmalloc(n, GFP_ATOMIC);
+	int res = 1;
+
+	if (raw_copy_from_user(buf, from, n))
+		goto out;
+	if (raw_copy_to_user(to, buf, n))
+		goto out;
+
+	res = 0;
+out:
+	kfree(buf);
+	return res;
+}
 
 static int strncpy_chunk_from_user(unsigned long from, int len, void *arg)
 {

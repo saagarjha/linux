@@ -5,12 +5,6 @@
 #include "emu/interrupt.h"
 #include "emu/cpu.h"
 
-// this is stupid
-void __user *arch_compat_alloc_user_space(long len)
-{
-	return NULL;
-}
-
 // linker error fixes
 int current_pid(void)
 {
