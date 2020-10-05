@@ -19,11 +19,14 @@ void arch_local_irq_restore(unsigned long flags)
 void handle_irq(int irq)
 {
 	unsigned long flags;
+	static struct pt_regs dummy_irq_regs;
+	struct pt_regs *old_regs = set_irq_regs(&dummy_irq_regs);
 
-	local_irq_save(flags);
+	local_irq_save(flags); /* TODO is this really needed? */
 	irq_enter();
 	generic_handle_irq(irq);
 	irq_exit();
+	set_irq_regs(old_regs);
 	local_irq_restore(flags);
 }
 
