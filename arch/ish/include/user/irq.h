@@ -3,6 +3,6 @@
 
 #include <asm/irq.h>
 
-void trigger_irq(int irq);
+void trigger_irq(int irq, void *data);
 
 #endif

@@ -33,4 +33,6 @@ int real_poll_update(struct real_poll *real, int fd, int types, void *data);
 void *rpe_data(struct real_poll_event *rpe);
 int rpe_events(struct real_poll_event *rpe);
 
+#define POLL_EDGETRIGGERED (1u << 31)
+
 #endif

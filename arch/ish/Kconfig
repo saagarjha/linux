@@ -60,3 +60,8 @@ config GENERIC_CSUM
 
 config HOSTFS
 	bool "Host filesystem"
+
+config HOST_INET
+	bool "Host-based AF_INET"
+	default y
+	depends on NET && !INET

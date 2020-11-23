@@ -1,10 +1,12 @@
 #include <asm/page.h>
+#include <linux/build_bug.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/memblock.h>
 #include <linux/sched/task.h>
 #include <linux/start_kernel.h>
 #include <user/user.h>
+#include <user/errno.h>
 
 char *empty_zero_page;
 
@@ -48,3 +50,9 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 #endif
+
+// I see no better place to put this
+#define CHECK_ERRNO(name, val) \
+	static_assert(name == val);
+ERRNOS(CHECK_ERRNO)
+#undef CHECK_ERRNO

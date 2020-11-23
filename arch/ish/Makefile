@@ -23,7 +23,7 @@ KBUILD_CFLAGS += -ferror-limit=0
 USER_CFLAGS = -I$(srctree)/arch/ish/include
 export USER_CFLAGS
 
-core-y += arch/ish/kernel/ arch/ish/mm/ arch/ish/abi/ arch/ish/drivers/
+core-y += arch/ish/kernel/ arch/ish/mm/ arch/ish/abi/ arch/ish/drivers/ arch/ish/net/
 head-y += arch/ish/kernel/sections.o
 
 core-y += arch/ish/$(EMULATOR)/
@@ -38,4 +38,4 @@ vmlinux: ../../build/libish_emu.a
 archheaders:
 	$(Q)$(MAKE) $(build)=arch/ish/syscalls all
 
-UTS_MACHINE := i386
+UTS_MACHINE := i686

@@ -2,6 +2,7 @@
 #include <poll.h>
 #include <unistd.h>
 
+#include <user/errno.h>
 #include <user/poll.h>
 
 /* TODO use separate files */
@@ -20,7 +21,10 @@ int real_poll_wait(struct real_poll *real, struct real_poll_event *events, int m
 	int timeout_millis = -1;
 	if (timeout != NULL)
 		timeout_millis = timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000;
-	return epoll_wait(real->fd, (struct epoll_event *) events, max, timeout_millis);
+	int err = epoll_wait(real->fd, (struct epoll_event *) events, max, timeout_millis);
+	if (err < 0)
+		return errno_map();
+	return err;
 }
 
 int real_poll_update(struct real_poll *real, int fd, int types, void *data)
@@ -32,6 +36,8 @@ int real_poll_update(struct real_poll *real, int fd, int types, void *data)
 	int err = epoll_ctl(real->fd, EPOLL_CTL_MOD, fd, &epevent);
 	if (err < 0 && errno == ENOENT)
 		err = epoll_ctl(real->fd, EPOLL_CTL_ADD, fd, &epevent);
+	if (err < 0)
+		return errno_map();
 	return err;
 }
 
@@ -50,7 +56,7 @@ int real_poll_init(struct real_poll *real)
 {
 	real->fd = kqueue();
 	if (real->fd < 0)
-		return -1;
+		return errno_map();
 	return 0;
 }
 
@@ -70,18 +76,22 @@ int real_poll_update(struct real_poll *real, int fd, int types, void *data)
 		e[i].ident = fd;
 		e[i].udata = data;
 		e[i].flags |= EV_RECEIPT;
-		/*
 		if (types & POLL_EDGETRIGGERED)
 			e[i].flags |= EV_CLEAR;
-		*/
 	}
 
-	return kevent(real->fd, e, 3, e, 3, NULL);
+	int err = kevent(real->fd, e, 3, e, 3, NULL);
+	if (err < 0)
+		return errno_map();
+	return err;
 }
 
 int real_poll_wait(struct real_poll *real, struct real_poll_event *events, int max, struct timespec *timeout)
 {
-	return kevent(real->fd, NULL, 0, (struct kevent *) events, max, timeout);
+	int err = kevent(real->fd, NULL, 0, (struct kevent *) events, max, timeout);
+	if (err < 0)
+		return errno_map();
+	return err;
 }
 
 void *rpe_data(struct real_poll_event *rpe)

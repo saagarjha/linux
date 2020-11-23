@@ -75,7 +75,7 @@ static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
 		/* TODO: see if we can't get better error codes returned from these */
 		if (fd_set_nonblock(STDIN_FD) < 0)
 			return -EINVAL;
-		if (fd_add_irq(STDIN_FD, POLLIN, STDIN_IRQ) < 0)
+		if (fd_add_irq(STDIN_FD, POLLIN, STDIN_IRQ, port) < 0)
 			return -EINVAL;
 		port->client_data = (void *) 1;
 
@@ -139,8 +139,10 @@ static __init int stdio_init(void)
 	stdio_port.ops = &stdio_port_ops;
 
 	err = request_irq(STDIN_IRQ, stdin_irq, 0, "stdin", &stdio_port);
-	if (err)
+	if (err) {
 		pr_err("stdin: failed to request_irq: %d\n", err);
+		return err;
+	}
 
 	stdio_driver = alloc_tty_driver(1); /* TODO more than 1 */
 	if (!stdio_driver)
