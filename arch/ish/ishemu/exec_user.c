@@ -78,5 +78,5 @@ void emu_switch_mm(struct emu *emu, struct emu_mm *mm) {
 	if (!mm)
 		return;
 	emu->cpu.mmu = &mm->mmu;
-	tlb_init(&the_tlb, &mm->mmu);
+	tlb_refresh(&the_tlb, &mm->mmu);
 }
