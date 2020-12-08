@@ -26,5 +26,8 @@ int fd_poll(int fd);
 int host_socket(int domain, int type, int protocol);
 ssize_t host_sendmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, unsigned name_len, int flags);
 ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, int *name_len_out, int *flags_out, int flags);
+int host_bind(int fd, void *name, int name_len);
+int host_connect(int fd, void *name, int name_len);
+int host_getname(int fd, void *name, int peer);
 
 #endif

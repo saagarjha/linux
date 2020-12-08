@@ -121,41 +121,27 @@ static int check_sockaddr(struct sock *sk, void *addr, size_t addr_len)
 	return 0;
 }
 
-/* ping */
+/* generic operations */
 
-static int ping_init(struct socket *sock)
-{
-	struct host_sock *host = host_sk(sock->sk);
-	int err;
-	host->fd = host_socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
-	if (host->fd < 0)
-		return host->fd;
-	err = fd_set_nonblock(host->fd);
-	if (err < 0)
-		goto err_close;
-	err = fd_add_irq(host->fd, POLLIN|POLLOUT|EPOLLET, HOST_INET_IRQ, sock->sk);
-	if (err < 0)
-		goto err_close;
-	return 0;
-
-err_close:
-	host_close(host->fd);
-	return err;
-}
-
-static int ping_release(struct socket *sock)
+static int host_sock_release(struct socket *sock)
 {
 	struct host_sock *host = host_sk(sock->sk);
 	host_close(host->fd); /* hopefully this unregisters the fd with the epoll */
+	sock_put(sock->sk);
+	sock->sk = NULL;
 	return 0;
 }
-static int ping_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len)
+
+static int host_inet_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len)
 {
-	struct host_sock *host = host_sk(sock->sk);
+	struct sock *sk = sock->sk;
+	struct host_sock *host = host_sk(sk);
 	struct uiovec uio;
 	int err;
+	long timeo;
+	DEFINE_WAIT(wait);
 
-	err = check_sockaddr(sock->sk, m->msg_name, m->msg_namelen);
+	err = check_sockaddr(sk, m->msg_name, m->msg_namelen);
 	if (err < 0)
 		return err;
 	if (m->msg_control || m->msg_controllen) {
@@ -165,35 +151,16 @@ static int ping_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len)
 	err = uiovec_from_iov_iter(&m->msg_iter, total_len, &uio);
 	if (err < 0)
 		return err;
-	err = host_sendmsg(host->fd, uio.vec, uio.len, m->msg_name, m->msg_namelen, m->msg_flags);
-	uiovec_free(&uio);
-	return err;
-}
 
-static int ping_recvmsg(struct sock *sk, struct msghdr *m, size_t total_len, int noblock, int flags, int *addr_len)
-{
-	struct host_sock *host = host_sk(sk);
-	struct uiovec uio;
-	int err;
-	long timeo;
-	DEFINE_WAIT(wait);
-
-	flags &= ~MSG_CMSG_COMPAT; /* doesn't matter for inet messages */
-
-	err = uiovec_from_iov_iter(&m->msg_iter, total_len, &uio);
-	if (err < 0)
-		return err;
-	timeo = sock_rcvtimeo(sk, noblock);
+	timeo = sock_sndtimeo(sk, m->msg_flags & MSG_DONTWAIT);
 	for (;;) {
-		BUG_ON(!rcu_read_lock_held());
+		int host_flags = m->msg_flags;
+		host_flags &= ~(MSG_DONTWAIT | MSG_NOSIGNAL);
+
 		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-		err = host_recvmsg(host->fd, uio.vec, uio.len, m->msg_name, &m->msg_namelen, &m->msg_flags, flags);
-		if (err != -EAGAIN)
+		err = host_sendmsg(host->fd, uio.vec, uio.len, m->msg_name, m->msg_namelen, host_flags);
+		if (err != -EAGAIN || !timeo)
 			break;
-		if (!timeo) {
-			err = -ETIMEDOUT;
-			break;
-		}
 		if (signal_pending(current)) {
 			err = -ERESTARTSYS;
 			break;
@@ -202,33 +169,109 @@ static int ping_recvmsg(struct sock *sk, struct msghdr *m, size_t total_len, int
 	}
 	finish_wait(sk_sleep(sk), &wait);
 	uiovec_free(&uio);
+
+	if (sk->sk_type == SOCK_STREAM)
+		err = sk_stream_error(sk, m->msg_flags, err);
 	return err;
 }
 
-static __poll_t ping_poll(struct file *filp, struct socket *sock, struct poll_table_struct *wait)
+static int host_inet_recvmsg(struct socket *sock, struct msghdr *m, size_t total_len, int flags)
 {
-	struct host_sock *host = host_sk(sock->sk);
-	int f;
+	struct sock *sk = sock->sk;
+	struct host_sock *host = host_sk(sk);
+	struct uiovec uio;
+	int err;
+	int noblock;
+	long timeo;
+	DEFINE_WAIT(wait);
 
-	sock_poll_wait(filp, sock, wait);
-	f = fd_poll(host->fd);
-	printk("ping poll %x\n", f);
-	return f;
+	noblock = flags & MSG_DONTWAIT;
+	flags &= ~MSG_DONTWAIT;
+	flags &= ~MSG_CMSG_COMPAT; /* doesn't matter for inet messages */
+
+	err = uiovec_from_iov_iter(&m->msg_iter, total_len, &uio);
+	if (err < 0)
+		return err;
+	timeo = sock_rcvtimeo(sk, noblock);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		err = host_recvmsg(host->fd, uio.vec, uio.len, m->msg_name, &m->msg_namelen, &m->msg_flags, flags);
+		if (err != -EAGAIN || !timeo)
+			break;
+		if (signal_pending(current)) {
+			err = -ERESTARTSYS;
+			break;
+		}
+		timeo = schedule_timeout(timeo);
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	uiovec_free(&uio);
+
+	if (sk->sk_type == SOCK_STREAM)
+		err = sk_stream_error(sk, flags, err);
+	return err;
 }
 
-static struct proto_ops ping_ops = {
+static int host_inet_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+{
+	struct host_sock *host = host_sk(sock->sk);
+	DECLARE_SOCKADDR(struct sockaddr_in *, sin, addr);
+	int err;
+
+	err = check_sockaddr(sock->sk, sin, addr_len);
+	if (err < 0)
+		return err;
+	return host_bind(host->fd, sin, addr_len);
+}
+
+static int host_inet_connect(struct socket *sock, struct sockaddr *addr, int addr_len, int flags)
+{
+	struct host_sock *host = host_sk(sock->sk);
+	DECLARE_SOCKADDR(struct sockaddr_in *, sin, addr);
+	int err;
+
+	err = check_sockaddr(sock->sk, sin, addr_len);
+	if (err < 0)
+		return err;
+	return host_connect(host->fd, sin, addr_len);
+}
+
+static __poll_t host_inet_poll(struct file *filp, struct socket *sock, struct poll_table_struct *wait)
+{
+	struct host_sock *host = host_sk(sock->sk);
+
+	sock_poll_wait(filp, sock, wait);
+	return fd_poll(host->fd);
+}
+
+static int host_inet_getname(struct socket *sock, struct sockaddr *addr, int peer)
+{
+	struct host_sock *host = host_sk(sock->sk);
+	return host_getname(host->fd, addr, peer);
+}
+
+static struct proto_ops host_inet_ops = {
 	.family = PF_INET,
 	.owner = THIS_MODULE,
-	.release = ping_release,
-	.sendmsg = ping_sendmsg,
-	.recvmsg = sock_common_recvmsg,
-	.poll = ping_poll,
+	.release = host_sock_release,
+	.sendmsg = host_inet_sendmsg,
+	.recvmsg = host_inet_recvmsg,
+	.bind = host_inet_bind,
+	.connect = host_inet_connect,
+	.poll = host_inet_poll,
+	.getname = host_inet_getname,
 };
+
 static struct proto ping_proto = {
 	.name = "PING",
 	.owner = THIS_MODULE,
 	.obj_size = sizeof(struct host_sock),
-	.recvmsg = ping_recvmsg,
+};
+
+static struct proto udp_proto = {
+	.name = "UDP",
+	.owner = THIS_MODULE,
+	.obj_size = sizeof(struct host_sock),
 };
 
 static irqreturn_t host_inet_irq(int irq, void *dev_id)
@@ -245,12 +288,20 @@ static int host_inet_create(struct net *net, struct socket *sock, int protocol, 
 {
 	struct proto *proto = NULL;
 	struct sock *sk;
+	struct host_sock *host;
 	int err;
+	int host_type, host_proto;
 
 	sock->state = SS_UNCONNECTED;
+	sock->ops = &host_inet_ops;
 	if ((sock->type == SOCK_DGRAM || sock->type == SOCK_RAW) && protocol == IPPROTO_ICMP) {
-		sock->ops = &ping_ops;
 		proto = &ping_proto;
+		host_type = SOCK_DGRAM;
+		host_proto = IPPROTO_ICMP;
+	} else if (sock->type == SOCK_DGRAM && (protocol == IPPROTO_UDP || protocol == IPPROTO_IP)) {
+		proto = &udp_proto;
+		host_type = SOCK_DGRAM;
+		host_proto = IPPROTO_UDP;
 	} else {
 		printk("fuknope %d %d\n", sock->type, protocol);
 		return -EINVAL;
@@ -261,13 +312,27 @@ static int host_inet_create(struct net *net, struct socket *sock, int protocol, 
 		return -ENOBUFS;
 	sock_init_data(sock, sk);
 
-	err = ping_init(sock);
-	if (err < 0) {
-		sk_common_release(sk);
-		return err;
+	host = host_sk(sk);
+	host->fd = host_socket(AF_INET, host_type, host_proto);
+	if (host->fd < 0) {
+		sock_put(sk);
+		return host->fd;
 	}
 
+	err = fd_set_nonblock(host->fd);
+	if (err < 0)
+		goto err_close;
+	err = fd_add_irq(host->fd, POLLIN|POLLOUT|EPOLLET, HOST_INET_IRQ, sk);
+	if (err < 0)
+		goto err_close;
+
 	return 0;
+
+err_close:
+	host_close(host->fd);
+	if (sk)
+		sock_put(sk);
+	return err;
 }
 
 static struct net_proto_family host_inet_family = {

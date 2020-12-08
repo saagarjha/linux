@@ -1,7 +1,9 @@
-#include <stddef.h>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netinet/in.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -87,11 +89,36 @@ static_assert(sizeof(struct iovec) == sizeof(struct user_iovec), "iovec size");
 static_assert(offsetof(struct iovec, iov_base) == offsetof(struct user_iovec, base), "iovec.iov_base");
 static_assert(offsetof(struct iovec, iov_len) == offsetof(struct user_iovec, len), "iovec.iov_len");
 
+struct kernel_sockaddr {
+    uint16_t family;
+    char data[14];
+};
+static_assert(offsetof(struct kernel_sockaddr, data) == offsetof(struct sockaddr, sa_data), "sockaddr.sa_data");
+
+static void sockaddr_from_kernel(void *name, int name_len)
+{
+	struct sockaddr *host_name = name;
+	struct kernel_sockaddr *kernel_name = name;
+	if (name) {
+		host_name->sa_family = kernel_name->family;
+		host_name->sa_len = name_len;
+	}
+}
+static void sockaddr_to_kernel(void *name, int name_len)
+{
+	struct sockaddr *host_name = name;
+	struct kernel_sockaddr *kernel_name = name;
+	if (name) {
+		kernel_name->family = host_name->sa_family;
+	}
+}
+
 ssize_t host_sendmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, unsigned name_len, int flags)
 {
 	/* need to translate flags */
 	/* need to translate name */
 	assert(flags == 0);
+	sockaddr_from_kernel(name, name_len);
 	struct msghdr msg = {
 		.msg_iov = (struct iovec *) iov,
 		.msg_iovlen = iov_len,
@@ -116,10 +143,42 @@ ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name,
 	ssize_t len = recvmsg(fd, &msg, flags);
 	if (len < 0)
 		return errno_map();
+	sockaddr_to_kernel(msg.msg_name, msg.msg_namelen);
 	*name_len_out = msg.msg_namelen;
-	assert(msg.msg_flags == 0);
+	assert(msg.msg_flags == 0); /* TODO */
 	*flags_out = msg.msg_flags;
 	return len;
+}
+
+int host_bind(int fd, void *name, int name_len)
+{
+	int err;
+
+	sockaddr_from_kernel(name, name_len);
+	err = bind(fd, name, name_len);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_connect(int fd, void *name, int name_len)
+{
+	int err;
+
+	sockaddr_from_kernel(name, name_len);
+	err = connect(fd, name, name_len);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_getname(int fd, void *name, int peer)
+{
+	socklen_t name_len;
+	int err = (peer ? getpeername : getsockname)(fd, name, &name_len);
+	if (err < 0)
+		return errno_map();
+	assert(name_len == sizeof(struct sockaddr_in));
 }
 
 int fd_set_nonblock(int fd)
