@@ -29,5 +29,6 @@ ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name,
 int host_bind(int fd, void *name, int name_len);
 int host_connect(int fd, void *name, int name_len);
 int host_getname(int fd, void *name, int peer);
+int host_get_so_error(int fd);
 
 #endif

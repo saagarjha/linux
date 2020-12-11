@@ -179,6 +179,17 @@ int host_getname(int fd, void *name, int peer)
 	if (err < 0)
 		return errno_map();
 	assert(name_len == sizeof(struct sockaddr_in));
+	return 0;
+}
+
+int host_get_so_error(int fd)
+{
+	int so_error;
+	socklen_t so_error_len = sizeof(so_error);
+	int err = getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &so_error_len);
+	if (err < 0)
+		return errno_map();
+	return so_error;
 }
 
 int fd_set_nonblock(int fd)
@@ -194,6 +205,7 @@ int fd_set_nonblock(int fd)
 
 int fd_poll(int fd)
 {
+	int err;
 	/* This is dramatically simplified by assuming fd will always be a
 	 * socket, and ignoring any Darwin idiosyncracies with other types of
 	 * fds. */
@@ -204,7 +216,10 @@ int fd_poll(int fd)
 		p.events |= POLLIN;
 	if ((flags & O_ACCMODE) != O_RDONLY)
 		p.events |= POLLOUT;
-	if (poll(&p, 1, 0) <= 0)
+	err = poll(&p, 1, 0);
+	if (err < 0)
+		return errno_map();
+	if (err == 0)
 		return 0;
 	return p.revents;
 }

@@ -233,7 +233,35 @@ static int host_inet_connect(struct socket *sock, struct sockaddr *addr, int add
 	err = check_sockaddr(sock->sk, sin, addr_len);
 	if (err < 0)
 		return err;
-	return host_connect(host->fd, sin, addr_len);
+
+	err = host_connect(host->fd, sin, addr_len);
+	if (err == -EINPROGRESS) {
+		DEFINE_WAIT(wait);
+		long timeo = sock_sndtimeo(sock->sk, flags & O_NONBLOCK);
+		while (timeo) {
+			int poll_bits = fd_poll(host->fd);
+			if (poll_bits < 0) {
+				err = poll_bits;
+				break;
+			}
+			if (poll_bits & POLLOUT) {
+				err = 0;
+				break;
+			}
+			prepare_to_wait(sk_sleep(sock->sk), &wait, TASK_INTERRUPTIBLE);
+			if (signal_pending(current)) {
+				err = -ERESTARTSYS;
+				break;
+			}
+			timeo = schedule_timeout(timeo);
+		}
+		finish_wait(sk_sleep(sock->sk), &wait);
+		err = 0;
+	}
+
+	if (err >= 0)
+		err = host_get_so_error(host->fd);
+	return err;
 }
 
 static __poll_t host_inet_poll(struct file *filp, struct socket *sock, struct poll_table_struct *wait)
@@ -254,12 +282,14 @@ static struct proto_ops host_inet_ops = {
 	.family = PF_INET,
 	.owner = THIS_MODULE,
 	.release = host_sock_release,
-	.sendmsg = host_inet_sendmsg,
-	.recvmsg = host_inet_recvmsg,
 	.bind = host_inet_bind,
 	.connect = host_inet_connect,
-	.poll = host_inet_poll,
 	.getname = host_inet_getname,
+	.poll = host_inet_poll,
+	.setsockopt = sock_no_setsockopt,
+	.getsockopt = sock_no_getsockopt,
+	.sendmsg = host_inet_sendmsg,
+	.recvmsg = host_inet_recvmsg,
 };
 
 static struct proto ping_proto = {
@@ -274,11 +304,17 @@ static struct proto udp_proto = {
 	.obj_size = sizeof(struct host_sock),
 };
 
+static struct proto tcp_proto = {
+	.name = "TCP",
+	.owner = THIS_MODULE,
+	.obj_size = sizeof(struct host_sock),
+};
+
 static irqreturn_t host_inet_irq(int irq, void *dev_id)
 {
 	struct sock *sk = current_irq_data();
+	BUG_ON(!sk);
 	rcu_read_lock();
-	BUG_ON(!rcu_read_lock_held());
 	wake_up_interruptible_all(sk_sleep(sk));
 	rcu_read_unlock();
 	return IRQ_HANDLED;
@@ -302,6 +338,10 @@ static int host_inet_create(struct net *net, struct socket *sock, int protocol, 
 		proto = &udp_proto;
 		host_type = SOCK_DGRAM;
 		host_proto = IPPROTO_UDP;
+	} else if (sock->type == SOCK_STREAM && (protocol == IPPROTO_TCP || protocol == IPPROTO_IP)) {
+		proto = &tcp_proto;
+		host_type = SOCK_STREAM;
+		host_proto = IPPROTO_TCP;
 	} else {
 		printk("fuknope %d %d\n", sock->type, protocol);
 		return -EINVAL;
