@@ -10,6 +10,7 @@ ssize_t host_pwrite(int fd, void *data, size_t len, off_t offset);
 ssize_t host_pread(int fd, void *data, size_t len, off_t offset);
 int fd_set_nonblock(int fd);
 int host_open(const char *path, int flags);
+int host_pipe(int *r, int *w);
 int host_close(int fd);
 
 struct user_iovec {
@@ -19,7 +20,14 @@ struct user_iovec {
 
 void termio_make_raw(int fd);
 
-int fd_add_irq(int fd, int types, int irq, void *data);
+struct fd_listener {
+	int irq;
+	/* If data is non-NULL, it will be written into pipe */
+	void *data;
+	int pipe;
+};
+int fd_listen(int fd, int types, struct fd_listener *listener);
+
 int fd_poll(int fd);
 
 /* net stuff */

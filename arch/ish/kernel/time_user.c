@@ -41,7 +41,7 @@ static void *timer_thread(void *dummy)
 			timer_interval = next_interval;
 		}
 		if (res == 0) {
-			trigger_irq(TIMER_IRQ, NULL);
+			trigger_irq(TIMER_IRQ);
 			timer_interval = 0;
 		}
 	}

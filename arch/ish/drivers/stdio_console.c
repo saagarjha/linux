@@ -71,13 +71,17 @@ static irqreturn_t stdin_irq(int irq, void *dev_id)
 
 static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
 {
+	int err;
 	if (port->client_data == NULL) {
-		/* TODO: see if we can't get better error codes returned from these */
-		if (fd_set_nonblock(STDIN_FD) < 0)
-			return -EINVAL;
-		if (fd_add_irq(STDIN_FD, POLLIN, STDIN_IRQ, port) < 0)
-			return -EINVAL;
-		port->client_data = (void *) 1;
+		static struct fd_listener listener = {.irq = STDIN_IRQ};
+
+		err = fd_set_nonblock(STDIN_FD);
+		if (err < 0)
+			return err;
+		err = fd_listen(STDIN_FD, POLLIN, &listener);
+		if (err < 0)
+			return err;
+		port->client_data = &listener;
 
 		termio_make_raw(STDIN_FD);
 	}

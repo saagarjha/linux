@@ -9,6 +9,7 @@
 struct host_sock {
 	struct sock sock;
 	int fd;
+	struct fd_listener listener;
 };
 
 static struct host_sock *host_sk(struct sock *sk)
@@ -310,12 +311,20 @@ static struct proto tcp_proto = {
 	.obj_size = sizeof(struct host_sock),
 };
 
+static int inet_pipe_read, inet_pipe_write;
+
 static irqreturn_t host_inet_irq(int irq, void *dev_id)
 {
-	struct sock *sk = current_irq_data();
-	BUG_ON(!sk);
+	struct sock *sk;
 	rcu_read_lock();
-	wake_up_interruptible_all(sk_sleep(sk));
+	for (;;) {
+		int err = host_read(inet_pipe_read, &sk, sizeof(struct sock *));
+		if (err <= 0)
+			break;
+
+		BUG_ON(!sk);
+		wake_up_interruptible_all(sk_sleep(sk));
+	}
 	rcu_read_unlock();
 	return IRQ_HANDLED;
 }
@@ -362,7 +371,10 @@ static int host_inet_create(struct net *net, struct socket *sock, int protocol, 
 	err = fd_set_nonblock(host->fd);
 	if (err < 0)
 		goto err_close;
-	err = fd_add_irq(host->fd, POLLIN|POLLOUT|EPOLLET, HOST_INET_IRQ, sk);
+	host->listener.irq = HOST_INET_IRQ;
+	host->listener.data = sk;
+	host->listener.pipe = inet_pipe_write;
+	err = fd_listen(host->fd, POLLIN|POLLOUT|EPOLLET, &host->listener);
 	if (err < 0)
 		goto err_close;
 
@@ -382,11 +394,23 @@ static struct net_proto_family host_inet_family = {
 
 static int __init host_inet_init(void)
 {
-	int err = request_irq(HOST_INET_IRQ, host_inet_irq, 0, "host-inet", NULL);
+	int err = host_pipe(&inet_pipe_read, &inet_pipe_write);
+	if (err < 0) {
+		pr_err("host-inet: failed host_pipe: %d\n", err);
+		return err;
+	}
+	err = fd_set_nonblock(inet_pipe_read);
+	if (err < 0) {
+		pr_err("host-inet: failed to make host_pipe nonblock: %d\n", err);
+		return err;
+	}
+
+	err = request_irq(HOST_INET_IRQ, host_inet_irq, 0, "host-inet", NULL);
 	if (err < 0) {
 		pr_err("host-inet: failed request_irq: %d\n", err);
 		return err;
 	}
+
 	err = sock_register(&host_inet_family);
 	if (err < 0) {
 		pr_err("host-inet: failed sock_register: %d\n", err);

@@ -39,6 +39,16 @@ int host_open(const char *file, int flags)
 	return fd;
 }
 
+int host_pipe(int *r, int *w) {
+	int p[2];
+	int err = pipe(p);
+	if (err < 0)
+		return errno_map();
+	*r = p[0];
+	*w = p[1];
+	return 0;
+}
+
 ssize_t host_write(int fd, const void *data, size_t len)
 {
 	ssize_t res = write(fd, data, len);
