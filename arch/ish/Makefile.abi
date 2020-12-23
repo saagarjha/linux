@@ -1,0 +1,15 @@
+ABI_ARCH = x86
+export ABI_ARCH
+
+core-y += arch/ish/$(ABI_ARCH)/
+
+archheaders: asm-abi
+	$(Q)$(MAKE) $(build)=arch/ish/$(ABI_ARCH)/syscalls all
+
+abi-include := -f $(srctree)/arch/ish/Makefile.abi-include dir
+asm-abi: asm-generic
+	$(Q)$(MAKE) $(abi-include)=asm
+	$(Q)$(MAKE) $(abi-include)=uapi/asm
+PHONY += abi-asm
+
+include $(srctree)/arch/ish/$(ABI_ARCH)/Makefile.abi

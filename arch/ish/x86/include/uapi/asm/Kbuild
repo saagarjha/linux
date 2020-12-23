@@ -1,0 +1,10 @@
+generated-y += unistd_32.h
+generated-y += unistd_64.h
+generated-y += unistd_x32.h
+
+redir-arch-y += ldt.h
+redir-arch-y += processor-flags.h
+redir-arch-y += sigcontext.h
+redir-arch-y += stat.h
+redir-arch-y += statfs.h
+redir-arch-y += ucontext.h

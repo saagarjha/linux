@@ -1,0 +1,30 @@
+PHONY := all
+all:
+
+obj = $(objtree)/arch/ish/include/generated/$(dir)
+abi_src = $(srctree)/arch/ish/$(ABI_ARCH)/include/$(dir)
+arch_src = $(srctree)/arch/$(ABI_ARCH)/include/$(dir)
+include $(abi_src)/Kbuild
+
+include scripts/Kbuild.include
+
+quiet_cmd_redirect = REDIR   $@
+      cmd_redirect = echo "\#include \"$(shell realpath --relative-to="$(dir $@)" $<)\"" > $@
+
+$(obj)/%.h:
+	$(call if_changed,redirect)
+
+$(foreach file,$(redir-abi-y),$(eval $(obj)/$(file): $(abi_src)/$(file)))
+$(foreach file,$(redir-arch-y),$(eval $(obj)/$(file): $(arch_src)/$(file)))
+
+headers = $(addprefix $(obj)/,$(redir-abi-y) $(redir-arch-y))
+$(headers): FORCE
+all: $(headers)
+	@:
+
+PHONY += FORCE
+FORCE:
+existing-headers = $(wildcard $(sort $(headers)))
+-include $(foreach f,$(existing-headers),$(dir $(f)).$(notdir $(f)).cmd)
+
+.PHONY: $(PHONY)

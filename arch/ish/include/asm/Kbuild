@@ -6,4 +6,5 @@ generic-y += local64.h
 generic-y += string.h
 generic-y += user.h
 
-generated-y += syscalls_32.h
+include $(srctree)/arch/ish/$(ABI_ARCH)/include/asm/Kbuild
+generated-y += $(redir-abi-y) $(redir-arch-y)
