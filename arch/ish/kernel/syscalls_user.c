@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/uio.h>
 #include <termios.h>
 #include <time.h>
@@ -76,6 +77,16 @@ ssize_t host_pread(int fd, void *data, size_t len, off_t offset)
 	if (res < 0)
 		return errno_map();
 	return res;
+}
+
+int host_fstat_size(int fd, ssize_t *size)
+{
+	struct stat stat;
+	int err = fstat(fd, &stat);
+	if (err < 0)
+		return errno_map();
+	*size = stat.st_size;
+	return 0;
 }
 
 int host_close(int fd)

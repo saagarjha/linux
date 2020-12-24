@@ -52,12 +52,15 @@ static int ivd_major;
 static int __init ivd_init()
 {
 	struct ivd *ivd;
+	int err;
 
 	ivd_major = register_blkdev(0, "ivd");
 	if (ivd_major < 0)
 		return ivd_major;
 
 	if (*ivd_file) {
+		ssize_t ivd_size;
+
 		printk("ivd: %s\n", ivd_file);
 		ivd = &ivd0;
 		ivd->fd = host_open(ivd_file, O_RDWR);
@@ -73,8 +76,12 @@ static int __init ivd_init()
 		ivd->disk->fops = &ivd_fops;
 		strcpy(ivd->disk->disk_name, "ivd0");
 		ivd->disk->private_data = &ivd0;
-		// TODO be bothered
-		set_capacity(ivd->disk, 1 << (24-SECTOR_SHIFT));
+		err = host_fstat_size(ivd->fd, &ivd_size);
+		if (err < 0) {
+			printk("ivd: %s: failed to get size\n", ivd_file);
+			return err;
+		}
+		set_capacity(ivd->disk, ivd_size / SECTOR_SIZE);
 		add_disk(ivd->disk);
 	}
 	

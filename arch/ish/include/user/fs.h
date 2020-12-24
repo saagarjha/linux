@@ -8,6 +8,7 @@ ssize_t host_write(int fd, const void *data, size_t len);
 ssize_t host_read(int fd, void *data, size_t len);
 ssize_t host_pwrite(int fd, void *data, size_t len, off_t offset);
 ssize_t host_pread(int fd, void *data, size_t len, off_t offset);
+int host_fstat_size(int fd, ssize_t *size);
 int fd_set_nonblock(int fd);
 int host_open(const char *path, int flags);
 int host_pipe(int *r, int *w);
