@@ -146,8 +146,9 @@ signal:
 	}
 }
 
-static void __kernel_thread(void)
+static void __kernel_thread(struct task_struct *last)
 {
+	schedule_tail(last);
 	if (current->thread.request.func)
 		current->thread.request.func(current->thread.request.arg);
 	__user_thread();

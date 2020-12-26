@@ -16,11 +16,14 @@ _ksetjmp:
 .global _klongjmp
 _klongjmp:
 	movq %rsi, %rax
-	movq 0(%rdi), %rbx
-	movq 8(%rdi), %rsp
-	movq 16(%rdi), %rbp
-	movq 24(%rdi), %r12
-	movq 32(%rdi), %r13
-	movq 40(%rdi), %r14
-	movq 48(%rdi), %r15
-	jmpq *56(%rdi)
+	/* If we're magically calling a function, let the first argument be the
+	 * longjmp parameter. */
+	xchg %rsi, %rdi
+	movq 0(%rsi), %rbx
+	movq 8(%rsi), %rsp
+	movq 16(%rsi), %rbp
+	movq 24(%rsi), %r12
+	movq 32(%rsi), %r13
+	movq 40(%rsi), %r14
+	movq 48(%rsi), %r15
+	jmpq *56(%rsi)
