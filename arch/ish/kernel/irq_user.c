@@ -7,37 +7,35 @@
 #include <user/fs.h>
 #include <user/irq.h>
 #include <user/poll.h>
-
-extern void handle_irq(int irq);
+#include "irq_user.h"
 
 static pthread_t irq_thread;
 
 /* TODO @smp: make something per-cpu */
-static int irq_num = -1;
-static pthread_mutex_t irq_ack_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t irq_acked = PTHREAD_COND_INITIALIZER;
+static int irq_pending[NR_IRQS];
+static pthread_mutex_t irq_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void sigusr1_handler(int signal)
 {
-	int irq;
-
-	pthread_mutex_lock(&irq_ack_lock);
-	irq = irq_num;
-	irq_num = -1;
-	pthread_cond_broadcast(&irq_acked);
-	pthread_mutex_unlock(&irq_ack_lock);
-
-	handle_irq(irq);
+	pthread_mutex_lock(&irq_lock);
+	for (int irq = 0; irq < NR_IRQS; irq++) {
+		if (irq_pending[irq]) {
+			irq_pending[irq] = 0;
+			pthread_mutex_unlock(&irq_lock);
+			handle_irq(irq);
+			pthread_mutex_lock(&irq_lock);
+		}
+	}
+	pthread_mutex_unlock(&irq_lock);
 }
 
 void trigger_irq(int irq)
 {
-	pthread_mutex_lock(&irq_ack_lock);
-	irq_num = irq;
+	/* must not be called from a kernel thread, or may deadlock! */
+	pthread_mutex_lock(&irq_lock);
+	irq_pending[irq] = 1;
+	pthread_mutex_unlock(&irq_lock);
 	pthread_kill(irq_thread, SIGUSR1);
-	while (irq_num != -1)
-		pthread_cond_wait(&irq_acked, &irq_ack_lock);
-	pthread_mutex_unlock(&irq_ack_lock);
 }
 
 static struct real_poll poller;
@@ -63,6 +61,17 @@ static void *poll_thread(void *dummy)
 		}
 		trigger_irq(listener->irq);
 	}
+}
+
+void user_set_irqs_enabled(int enabled)
+{
+	sigset_t set;
+	int err;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	err = pthread_sigmask(enabled ? SIG_UNBLOCK : SIG_BLOCK, &set, NULL);
+	if (err != 0)
+		panic("pthread_sigmask failed");
 }
 
 void user_init_IRQ(void)
