@@ -4,6 +4,7 @@
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/sched/task_stack.h>
+#include <asm/ldt.h>
 #include <asm/mmu_context.h>
 #include <asm/ptrace.h>
 #include <asm/syscall.h>
@@ -147,12 +148,22 @@ static void __kernel_thread(struct task_struct *last)
 	__user_thread();
 }
 
+/* TODO put this in a header */
+int do_set_thread_area(struct task_struct *task, struct user_desc __user *u_info);
+
 int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
 		unsigned long arg, struct task_struct *p, unsigned long tls)
 {
-	// TODO: tls
 	*task_pt_regs(p) = *current_pt_regs();
 	task_pt_regs(p)->ax = 0;
+	if (clone_flags & CLONE_SETTLS) {
+		int err = do_set_thread_area(p, (struct user_desc __user *) tls);
+		if (err < 0)
+			return err;
+	}
+	if (usp) {
+		task_pt_regs(p)->sp = usp;
+	}
 	KSTK_ESP(p) = (unsigned long) task_stack_page(p) + THREAD_SIZE - sizeof(void *);
 	KSTK_EIP(p) = (unsigned long) __kernel_thread;
 	p->thread.request.func = NULL;

@@ -51,6 +51,7 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	regs->bp = emu->cpu.ebp;
 	regs->sp = emu->cpu.esp;
 	regs->ip = emu->cpu.eip;
+	regs->tls = emu->cpu.tls_ptr;
 
 	if (interrupt == INT_GPF) {
 		regs->cr2 = emu->cpu.segfault_addr;
