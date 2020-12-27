@@ -11,14 +11,14 @@
 
 extern int current_pid(void);
 
-extern void *user_to_kernel(unsigned long virt, int is_write);
+extern void *user_to_kernel_emu(struct emu_mm *emu_mm, unsigned long virt, int is_write);
 extern void handle_interrupt(int interrupt, unsigned long fault_addr, int is_write);
 
 static __thread struct tlb the_tlb;
 
 static void *ishemu_translate(struct mmu *mem, addr_t addr, int type)
 {
-	return user_to_kernel(addr, type == MEM_WRITE);
+	return user_to_kernel_emu(container_of(mem, struct emu_mm, mmu), addr, type == MEM_WRITE);
 }
 
 static struct mmu_ops ishemu_ops = {
@@ -74,6 +74,7 @@ void emu_mmu_init(struct emu *emu, struct emu_mm *mm)
 	mm->mmu.jit = jit_new(&mm->mmu);
 	mm->mmu.ops = &ishemu_ops;
 }
+
 void emu_switch_mm(struct emu *emu, struct emu_mm *mm) {
 	if (!mm)
 		return;

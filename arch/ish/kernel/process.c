@@ -179,7 +179,7 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 	last = (void *) ksetjmp(from->thread.kernel_regs);
 	if (last == NULL)
 		klongjmp(to->thread.kernel_regs, (unsigned long) from);
-	switch_mm(last->mm, to->mm, to);
+	/* switch_mm(last->mm, current->mm, current); */
 	return last;
 }
 

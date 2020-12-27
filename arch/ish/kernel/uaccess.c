@@ -36,15 +36,23 @@ pte_t *virt_to_pte(struct mm_struct *mm, unsigned long addr)
 	return pte_offset_kernel(pmd, addr);
 }
 
-/* exported for emulators to call */
-void *user_to_kernel(unsigned long virt, int is_write)
+/* exported for gdb, I guess */
+void *user_to_kernel(struct mm_struct *mm, unsigned long virt, int is_write)
 {
-	pte_t *pte = virt_to_pte(current->mm, virt);
+	pte_t *pte = virt_to_pte(mm, virt);
 	if (pte == NULL || !pte_present(*pte))
 		return NULL;
 	if (is_write && !pte_write(*pte))
 		return NULL;
 	return pfn_to_virt(pte_pfn(*pte)) + (virt & ~PAGE_MASK);
+}
+
+/* for emulators to call */
+void *user_to_kernel_emu(struct emu_mm *emu_mm, unsigned long virt, int is_write)
+{
+	struct mm_struct *mm = container_of(emu_mm, struct mm_struct, context.emu_mm);
+	BUG_ON(mm != current->mm);
+	return user_to_kernel(mm, virt, is_write);
 }
 
 static pte_t *maybe_map(unsigned long virt, int is_write)
