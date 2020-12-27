@@ -27,10 +27,27 @@ static void stdio_tty_hangup(struct tty_struct *tty)
 	tty_port_hangup(&stdio_port);
 }
 
+static ssize_t write_full(int fd, const char *data, size_t len)
+{
+	size_t total = 0;
+	while (total < len) {
+		ssize_t res = host_write(fd, data + total, len - total);
+		if (res == -EAGAIN || res == -EINTR)
+			/* this is a busy loop...fuck */
+			/* TODO: irq on stdout @unshippable */
+			continue;
+		if (res < 0)
+			return res;
+		total += res;
+	}
+	return total;
+}
+
 static int stdio_tty_write(struct tty_struct *tty, const unsigned char *data, int len)
 {
-	host_write(STDOUT_FD, data, len);
-	return len;
+	ssize_t res = write_full(STDOUT_FD, data, len);
+	BUG_ON(res > 0 && res != len);
+	return res;
 }
 
 static int stdio_tty_write_room(struct tty_struct *tty)
@@ -93,14 +110,19 @@ static const struct tty_port_operations stdio_port_ops = {
 
 static void stdio_console_write(struct console *console, const char *data, unsigned len)
 {
-	/* TODO this sucks */
+	/* TODO this still kinda sucks */
 	
-	size_t i;
-	for (i = 0; i < len; i++) {
-		if (data[i] == '\n')
-			host_write(STDOUT_FD, "\r\n", 2);
-		else
-			host_write(STDOUT_FD, &data[i], 1);
+	while (len) {
+		const char *newline = memchr(data, '\n', len);
+		if (newline != NULL) {
+			write_full(STDOUT_FD, data, newline - data);
+			write_full(STDOUT_FD, "\r\n", 2);
+			len -= newline - data + 1;
+			data = newline + 1;
+		} else {
+			write_full(STDOUT_FD, data, len);
+			len = 0;
+		}
 	}
 }
 static struct tty_driver *stdio_console_device(struct console *console, int *index)
