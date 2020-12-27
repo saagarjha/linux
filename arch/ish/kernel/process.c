@@ -88,9 +88,6 @@ static void show_signal(struct task_struct *task, const char *desc, unsigned lon
 	}
 }
 
-static bool log_syscalls;
-module_param(log_syscalls, bool, 0660);
-
 static void __user_thread(void)
 {
 	struct pt_regs *regs = current_pt_regs();
@@ -125,18 +122,11 @@ static void __user_thread(void)
 			}
 			syscall = sys_call_table[regs->orig_ax];
 
-			if (log_syscalls && regs->orig_ax == __NR_exit)
-				printk("%s[%d] exit %d", current->comm,
-				       current->pid, regs->bx);
 			if (trace_syscall_enter(regs))
 				goto signal;
 			regs->ax = syscall(regs->bx, regs->cx, regs->dx,
 					   regs->si, regs->di, regs->bp);
 			trace_syscall_exit(regs);
-			if (log_syscalls)
-				printk("%s[%d] syscall %d -> %d\n",
-				       current->comm, current->pid,
-				       regs->orig_ax, regs->ax);
 		} else if (interrupt == 0x20) {
 			/* timer */
 		} else {
@@ -167,7 +157,6 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
 	KSTK_EIP(p) = (unsigned long) __kernel_thread;
 	p->thread.request.func = NULL;
 	if (unlikely(p->flags & PF_KTHREAD)) {
-		//printk("creating kernel thread %px to call %pS with %px\n", p->comm, p, usp, arg);
 		p->thread.request.func = (void (*)(void *)) usp;
 		p->thread.request.arg = (void (*)(void *)) arg;
 	}
