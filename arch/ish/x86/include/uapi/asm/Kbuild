@@ -8,3 +8,5 @@ redir-arch-y += sigcontext.h
 redir-arch-y += stat.h
 redir-arch-y += statfs.h
 redir-arch-y += ucontext.h
+redir-arch-y += ptrace.h
+redir-arch-y += ptrace-abi.h

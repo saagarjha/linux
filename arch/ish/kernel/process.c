@@ -128,8 +128,11 @@ static void __user_thread(void)
 			if (log_syscalls && regs->orig_ax == __NR_exit)
 				printk("%s[%d] exit %d", current->comm,
 				       current->pid, regs->bx);
+			if (trace_syscall_enter(regs))
+				goto signal;
 			regs->ax = syscall(regs->bx, regs->cx, regs->dx,
 					   regs->si, regs->di, regs->bp);
+			trace_syscall_exit(regs);
 			if (log_syscalls)
 				printk("%s[%d] syscall %d -> %d\n",
 				       current->comm, current->pid,

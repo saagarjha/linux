@@ -25,4 +25,7 @@ struct pt_regs {
 #define user_stack_pointer(regs) ((regs)->sp)
 #define instruction_pointer(regs) ((regs)->ip)
 
+int trace_syscall_enter(struct pt_regs *regs);
+void trace_syscall_exit(struct pt_regs *regs);
+
 #endif

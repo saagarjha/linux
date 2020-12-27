@@ -1,9 +1,10 @@
 generated-y += syscalls_32.h
 
+redir-arch-y += user32.h
 redir-arch-y += ia32.h
 redir-arch-y += processor-flags.h
 redir-arch-y += sigframe.h
 redir-arch-y += sighandling.h
+redir-arch-y += user32.h
 
 redir-abi-y += smap.h
-redir-abi-y += user32.h
