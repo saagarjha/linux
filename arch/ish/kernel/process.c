@@ -136,6 +136,8 @@ static void __user_thread(void)
 		}
 
 signal:
+		if (need_resched())
+			schedule();
 		do_signal(regs);
 	}
 }
