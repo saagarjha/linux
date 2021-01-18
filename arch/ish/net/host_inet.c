@@ -352,7 +352,7 @@ static int host_inet_create(struct net *net, struct socket *sock, int protocol, 
 		host_type = SOCK_STREAM;
 		host_proto = IPPROTO_TCP;
 	} else {
-		printk("fuknope %d %d\n", sock->type, protocol);
+		printk("%d[%s] fuknope %d %d\n", current->pid, current->comm, sock->type, protocol);
 		return -EINVAL;
 	}
 

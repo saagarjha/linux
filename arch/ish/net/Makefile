@@ -1,1 +1,1 @@
-obj-$(CONFIG_HOST_INET) += af_inet.o
+obj-$(CONFIG_HOST_INET) += host_inet.o
