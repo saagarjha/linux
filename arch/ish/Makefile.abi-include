@@ -9,7 +9,7 @@ include $(abi_src)/Kbuild
 include scripts/Kbuild.include
 
 quiet_cmd_redirect = REDIR   $@
-      cmd_redirect = echo "\#include \"$(shell realpath --relative-to="$(dir $@)" $<)\"" > $@
+      cmd_redirect = echo "\#include \"$(shell scripts/relpath $< $(dir $@))\"" > $@
 
 $(obj)/%.h:
 	$(call if_changed,redirect)
