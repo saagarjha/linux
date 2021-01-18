@@ -9,16 +9,15 @@
 #include "time_user.h"
 
 static int timer_pipe[2];
-static uint64_t timer_interval;
 
 /* TODO error handling */
 
 static void *timer_thread(void *dummy)
 {
 	struct real_poll poll;
-	struct real_poll_event event;
 	int flags;
-	int res;
+	uint64_t interval;
+	int active = 0;
 
 	real_poll_init(&poll);
 	real_poll_update(&poll, timer_pipe[0], POLLIN, NULL);
@@ -28,21 +27,24 @@ static void *timer_thread(void *dummy)
 
 	for (;;) {
 		struct timespec timeout;
+		struct real_poll_event event;
+		int res;
 
-		if (timer_interval != 0) {
-			timeout.tv_nsec = timer_interval % 1000000000;
-			timeout.tv_sec = timer_interval / 1000000000;
+		if (active) {
+			timeout.tv_nsec = interval % 1000000000;
+			timeout.tv_sec = interval / 1000000000;
 		}
+		res = real_poll_wait(&poll, &event, 1, active ? &timeout : NULL);
 
-		res = real_poll_wait(&poll, &event, 1, timer_interval != 0 ? &timeout : NULL);
 		if (res > 0) {
 			uint64_t next_interval;
 			read(timer_pipe[0], &next_interval, sizeof(next_interval));
-			timer_interval = next_interval;
+			interval = next_interval;
+			active = 1;
 		}
 		if (res == 0) {
 			trigger_irq(TIMER_IRQ);
-			timer_interval = 0;
+			active = 0;
 		}
 	}
 }
