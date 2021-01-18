@@ -717,6 +717,7 @@ comment "Xtables combined modules"
 config NETFILTER_XT_MARK
 	tristate 'nfmark target and match support'
 	default m if NETFILTER_ADVANCED=n
+	depends on CASE_SENSITIVE_BUILD
 	help
 	This option adds the "MARK" target and "mark" match.
 
@@ -1072,6 +1073,7 @@ config NETFILTER_XT_TARGET_SECMARK
 config NETFILTER_XT_TARGET_TCPMSS
 	tristate '"TCPMSS" target support'
 	depends on IPV6 || IPV6=n
+	depends on CASE_SENSITIVE_BUILD
 	default m if NETFILTER_ADVANCED=n
 	help
 	  This option adds a `TCPMSS' target, which allows you to alter the
