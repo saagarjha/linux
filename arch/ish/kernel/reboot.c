@@ -17,3 +17,8 @@ void machine_restart(char *cmd)
 {
 	machine_halt();
 }
+
+void machine_emergency_restart(void)
+{
+	__builtin_debugtrap();
+}
