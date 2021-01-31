@@ -28,6 +28,7 @@ void __init setup_arch(char **cmdline_p)
 
 	min_low_pfn = 0;
 	max_low_pfn = ish_phys_size >> PAGE_SHIFT;
+	max_mapnr = max_pfn = max_low_pfn;
 	
 	/* TODO @smp: do this for each kernel thread */
 	host_block_sigpipe();
