@@ -13,5 +13,6 @@ struct sym_info {
 int lookup_symbol(void *addr, struct sym_info *out);
 
 void host_pause(void);
+void host_block_sigpipe(void);
 
 #endif

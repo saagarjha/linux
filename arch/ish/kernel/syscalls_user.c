@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/mman.h>
@@ -19,12 +21,13 @@
 int err_map(int err)
 {
 	switch (err) {
+		case 0: return 0;
 #define ERRNO_CASE(name, val) \
 		case name: return -val;
 		ERRNOS(ERRNO_CASE)
 #undef ERRNO_CASE
 		default:
-			return -(0x1000 | err);
+			return -(0x800 | err);
 	}
 }
 int errno_map()
@@ -152,9 +155,15 @@ ssize_t host_sendmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name,
 	return len;
 }
 
-ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, int *name_len_out, int *flags_out, int flags)
+ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, int *name_len_out, int *flags_out, int kflags)
 {
-	assert(flags == 0);
+	int flags = 0;
+	if (kflags & 0x40)
+		flags |= MSG_DONTWAIT;
+	if (kflags & 0x2)
+		flags |= MSG_PEEK;
+	assert((kflags & ~0x42) == 0);
+
 	struct msghdr msg = {
 		.msg_iov = (struct iovec *) iov,
 		.msg_iovlen = iov_len,
@@ -164,10 +173,14 @@ ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name,
 	ssize_t len = recvmsg(fd, &msg, flags);
 	if (len < 0)
 		return errno_map();
-	sockaddr_to_kernel(msg.msg_name, msg.msg_namelen);
-	*name_len_out = msg.msg_namelen;
+	if (name) {
+		sockaddr_to_kernel(msg.msg_name, msg.msg_namelen);
+		*name_len_out = msg.msg_namelen;
+	}
+	msg.msg_flags &= ~flags;
 	assert(msg.msg_flags == 0); /* TODO */
-	*flags_out = msg.msg_flags;
+	if (flags_out)
+		*flags_out = msg.msg_flags;
 	return len;
 }
 
@@ -193,13 +206,13 @@ int host_connect(int fd, void *name, int name_len)
 	return 0;
 }
 
-int host_getname(int fd, void *name, int peer)
+int host_getname(int fd, void *name, int name_len, int type)
 {
-	socklen_t name_len;
-	int err = (peer ? getpeername : getsockname)(fd, name, &name_len);
+	socklen_t len = name_len;
+	int err = (type == GETNAME_PEER ? getpeername : getsockname)(fd, name, &len);
 	if (err < 0)
 		return errno_map();
-	assert(name_len == sizeof(struct sockaddr_in));
+	assert(name_len == len);
 	return 0;
 }
 
@@ -210,7 +223,57 @@ int host_get_so_error(int fd)
 	int err = getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &so_error_len);
 	if (err < 0)
 		return errno_map();
-	return so_error;
+	return err_map(so_error);
+}
+
+static int __host_getsockopt(int fd, int level, int opt, void *res, socklen_t len)
+{
+	int err = getsockopt(fd, level, opt, res, &len);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_get_so_nwrite(int fd, uint32_t *res)
+{
+#if defined(__APPLE__)
+	return __host_getsockopt(fd, SOL_SOCKET, SO_NWRITE, res, sizeof(*res));
+#elif defined(__linux__)
+	int err = ioctl(fd, SIOCOUTQ, res);
+	if (err < 0)
+		return errno_map();
+	return 0;
+#endif
+}
+
+int host_get_so_sndbuf(int fd, uint32_t *res)
+{
+	return __host_getsockopt(fd, SOL_SOCKET, SO_SNDBUF, res, sizeof(*res));
+}
+
+int host_set_so_reuseport(int fd, int value)
+{
+	int err = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (int[]){1}, sizeof(int));
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_set_so_linger(int fd, int linger, int interval)
+{
+	struct linger l = {.l_onoff = linger, .l_linger = interval};
+	int err = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+	if (err < 0)
+	    return errno_map();
+	return 0;
+}
+
+int host_shutdown_write(int fd)
+{
+	int err = shutdown(fd, SHUT_WR);
+	if (err < 0)
+		return errno_map();
+	return 0;
 }
 
 int fd_set_nonblock(int fd)
@@ -279,4 +342,12 @@ uint64_t host_unix_nanos(void)
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return ts.tv_sec * 1000000000 + ts.tv_nsec;
+}
+
+void host_block_sigpipe(void)
+{
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGPIPE);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
 }

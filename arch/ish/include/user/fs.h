@@ -37,7 +37,14 @@ ssize_t host_sendmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name,
 ssize_t host_recvmsg(int fd, struct user_iovec *iov, size_t iov_len, void *name, int *name_len_out, int *flags_out, int flags);
 int host_bind(int fd, void *name, int name_len);
 int host_connect(int fd, void *name, int name_len);
-int host_getname(int fd, void *name, int peer);
+#define GETNAME_SOCK 0
+#define GETNAME_PEER 1
+int host_getname(int fd, void *name, int name_len, int type);
 int host_get_so_error(int fd);
+int host_get_so_nwrite(int fd, uint32_t *res);
+int host_get_so_sndbuf(int fd, uint32_t *res);
+int host_set_so_reuseport(int fd, int value);
+int host_set_so_linger(int fd, int linger, int interval);
+int host_shutdown_write(int fd);
 
 #endif
