@@ -64,7 +64,6 @@ static void __tcp_socket_remove(struct net_device *dev,
 	spin_lock(&priv->sockets_lock);
 	hash_del(&sock->link);
 	spin_unlock(&priv->sockets_lock);
-	printk("golp_socket_put:%d\n", __LINE__);
 	golp_socket_put(sock);
 }
 
@@ -349,14 +348,12 @@ static void golp_tcp_tx_noconn(struct sk_buff *skb, struct net_device *dev)
 	err = fd_listen(sock->fd, POLLIN | POLLOUT | POLLHUP | EPOLLET,
 			&sock->listener);
 	if (err < 0) {
-		printk("golp_socket_put:%d\n", __LINE__);
 		golp_socket_put(sock);
 		return golp_drop_tx(dev, skb,
 				    "failed to listen on connecting socket");
 	}
 	err = fd_set_nonblock(sock->fd);
 	if (err < 0) {
-		printk("golp_socket_put:%d\n", __LINE__);
 		golp_socket_put(sock);
 		return golp_drop_tx(
 			dev, skb,
@@ -367,7 +364,6 @@ static void golp_tcp_tx_noconn(struct sk_buff *skb, struct net_device *dev)
 	sin.sin_port = tcp->dest;
 	err = host_connect(sock->fd, &sin, sizeof(sin));
 	if (err < 0 && err != -EINPROGRESS) {
-		printk("golp_socket_put:%d\n", __LINE__);
 		golp_socket_put(sock);
 		/* TODO: should this be a reset? */
 		return golp_drop_tx(dev, skb, "failed to initiate connection");
@@ -394,7 +390,6 @@ void golp_tcp4_tx(struct sk_buff *skb, struct net_device *dev)
 	sock = __tcp_socket_lookup(dev, ip->saddr, ntohs(tcp->source),
 				   ip->daddr, ntohs(tcp->dest));
 	if (sock) {
-		printk("golp_socket_hold:%d\n", __LINE__);
 		golp_socket_hold(sock);
 	}
 	spin_unlock(&priv->sockets_lock);
@@ -403,7 +398,6 @@ void golp_tcp4_tx(struct sk_buff *skb, struct net_device *dev)
 		spin_lock_irqsave(&sock->lock, flags);
 		golp_tcp_tx_conn(sock, skb, dev);
 		spin_unlock_irqrestore(&sock->lock, flags);
-		printk("golp_socket_put:%d\n", __LINE__);
 		golp_socket_put(sock);
 	} else {
 		golp_tcp_tx_noconn(skb, dev);
@@ -539,10 +533,8 @@ void golp_tcp4_rx(struct golp_socket *sock, struct net_device *dev)
 		goto nvm;
 	/* We are in the irq, so the socket is not going to get freed, at least until
 	 * we finish. */
-	printk("golp_socket_hold:%d\n", __LINE__);
 	golp_socket_hold(sock);
 	__golp_tcp4_rx(sock, dev);
-	printk("golp_socket_put:%d\n", __LINE__);
 	golp_socket_put(sock);
 nvm:
 	spin_unlock(&sock->lock);
