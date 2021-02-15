@@ -4,6 +4,7 @@
 #include <linux/init.h>
 #include <linux/memblock.h>
 #include <linux/sched/task.h>
+#include <linux/sched/task_stack.h>
 #include <linux/start_kernel.h>
 #include <user/user.h>
 #include <user/errno.h>
@@ -34,11 +35,13 @@ void __init setup_arch(char **cmdline_p)
 	host_block_sigpipe();
 }
 
-
 void run_kernel(void)
 {
 	current = &init_task;
-	start_kernel();
+	KSTK_ESP(current) = (unsigned long)task_stack_page(current) +
+			    THREAD_SIZE - sizeof(void *);
+	KSTK_EIP(current) = (unsigned long)start_kernel;
+	klongjmp(current->thread.kernel_regs, 0);
 }
 
 #ifdef CONFIG_ISH_MAIN
