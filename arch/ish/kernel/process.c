@@ -18,55 +18,6 @@ void show_regs(struct pt_regs *regs)
 	printk("<regs would go here>\n");
 }
 
-static void show_stack_frame(void *addr, const char *loglvl)
-{
-	char buf[128];
-	struct sym_info info;
-	if (lookup_symbol(addr, &info)) {
-		snprintf(buf, sizeof(buf), "[%px] %s`%s+%d", addr, info.module, info.symbol, addr - info.symbol_addr);
-	} else {
-		snprintf(buf, sizeof(buf), "%px", addr);
-	}
-	printk("%s %s\n", loglvl, buf);
-}
-
-struct stackframe {
-	struct stackframe *fp;
-	void *ret;
-};
-
-void show_stack(struct task_struct *task, unsigned long *stack,
-		const char *loglvl)
-{
-	struct stackframe *frame;
-	void *pc;
-	void *stack_low, *stack_high;
-
-	if (task == NULL)
-		task = current;
-	stack_low = task_stack_page(task);
-	stack_high = stack_low + THREAD_SIZE;
-
-	if (task == current) {
-		frame = __builtin_frame_address(0);
-		pc = show_stack;
-	} else {
-		frame = (void *) task->thread.kernel_regs->rbp;
-		pc = (void *) KSTK_EIP(task);
-	}
-
-	pr_cont("Call Trace:\n");
-	for (;;) {
-		if (pc)
-			show_stack_frame(pc, loglvl);
-		if ((void *) frame < stack_low || (void *) frame >= stack_high)
-			break;
-		pc = frame->ret;
-		frame = frame->fp;
-	}
-	// TODO: make %pS work
-}
-
 void start_thread(struct pt_regs *regs, unsigned long eip, unsigned long esp)
 {
 	regs->ip = eip;

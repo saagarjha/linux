@@ -1613,6 +1613,11 @@ config KALLSYMS
 	  symbolic stack backtraces. This increases the size of the kernel
 	  somewhat, as all symbols have to be loaded into the kernel image.
 
+config KALLSYMS_GENERIC
+	bool
+	depends on KALLSYMS
+	default !ARCH_KALLSYMS
+
 config KALLSYMS_ALL
 	bool "Include all symbols in kallsyms"
 	depends on DEBUG_KERNEL && KALLSYMS
@@ -1637,7 +1642,7 @@ config KALLSYMS_ABSOLUTE_PERCPU
 
 config KALLSYMS_BASE_RELATIVE
 	bool
-	depends on KALLSYMS
+	depends on KALLSYMS_GENERIC
 	default !IA64
 	help
 	  Instead of emitting them as absolute values in the native word size,

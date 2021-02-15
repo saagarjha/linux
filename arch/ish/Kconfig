@@ -23,6 +23,11 @@ config ARCH_RANDOM
 	def_bool y
 	prompt "Host random number generator" if EXPERT
 
+config ARCH_KALLSYMS
+	def_bool y
+
+config STACKTRACE_SUPPORT
+	def_bool y
 # ABI vore
 config 64BIT
 	bool
