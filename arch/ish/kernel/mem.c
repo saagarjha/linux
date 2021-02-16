@@ -12,6 +12,10 @@ void __init mem_init(void)
 	mem_init_print_info(NULL);
 }
 
+void free_initmem(void)
+{
+}
+
 /* Allocate and free page tables. */
 
 pgd_t *pgd_alloc(struct mm_struct *mm)
