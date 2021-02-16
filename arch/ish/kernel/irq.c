@@ -22,9 +22,11 @@ void arch_local_irq_restore(unsigned long enabled)
 		return;
 	/* Interrupts should be disabled while flipping the flag. */
 	if (irqs_enabled) {
+		/* turning interrupts on */
 		user_set_irqs_enabled(enabled);
 		irqs_enabled = enabled;
 	} else {
+		/* turning interrupts off */
 		irqs_enabled = enabled;
 		user_set_irqs_enabled(enabled);
 	}
@@ -39,12 +41,14 @@ void handle_irq(int irq)
 	 * reflect this. */
 	BUG_ON(!irqs_enabled);
 	irqs_enabled = 0;
+	trace_hardirqs_off();
 
 	irq_enter();
 	generic_handle_irq(irq);
 	irq_exit();
 	set_irq_regs(old_regs);
 
+	trace_hardirqs_on();
 	irqs_enabled = 1;
 }
 
@@ -54,5 +58,4 @@ void __init init_IRQ(void)
 	for (i = 0; i < NR_IRQS; i++)
 		irq_set_chip_and_handler(i, &dummy_irq_chip, handle_simple_irq);
 	user_init_IRQ();
-	irqs_enabled = ARCH_IRQ_ENABLED;
 }

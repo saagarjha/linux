@@ -30,6 +30,9 @@ config ARCH_KALLSYMS
 
 config STACKTRACE_SUPPORT
 	def_bool y
+config TRACE_IRQFLAGS_SUPPORT
+	def_bool y
+
 # ABI vore
 config 64BIT
 	bool
