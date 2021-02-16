@@ -282,12 +282,4 @@
  */
 #define __weak                          __attribute__((__weak__))
 
-#if defined(__MACH__)
-#define __sect_start(seg, sect) asm("section$start$__"#seg"$__"#sect)
-#define __sect_end(seg, sect) asm("section$end$__"#seg"$__"#sect)
-#else
-#define __sect_start(seg, sect)
-#define __sect_end(seg, sect)
-#endif
-
 #endif /* __LINUX_COMPILER_ATTRIBUTES_H */

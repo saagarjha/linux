@@ -26,7 +26,7 @@
 #define INIT_RAMFS .init.ramfs,"a"
 #define SYM(x) x
 #elif defined(__MACH__)
-#define INIT_RAMFS __TEXT,__init_ramfs
+#define INIT_RAMFS __DATA,__init_ramfs
 #define SYM(x) _##x
 #endif
 

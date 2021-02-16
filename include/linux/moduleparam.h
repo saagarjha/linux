@@ -81,7 +81,7 @@ struct kernel_param {
 	};
 };
 
-extern const struct kernel_param __start___param[] __sect_start(DATA,param), __stop___param[] __sect_end(DATA,param);
+extern const struct kernel_param __start___param[], __stop___param[];
 
 /* Special one for strings we want to copy into */
 struct kparam_string {
@@ -289,7 +289,7 @@ struct kparam_array
 	/* Default value instead of permissions? */			\
 	static const char __param_str_##name[] = prefix #name;		\
 	static struct kernel_param __moduleparam_const __param_##name	\
-	__used	__section_elf_macho(__param,DATA,param)			\
+	__used	__section_elf_macho(__param,TEXT,param)			\
 	__attribute__ ((unused,aligned(sizeof(void *))))		\
 	= { __param_str_##name, THIS_MODULE, ops,			\
 	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, { arg } }

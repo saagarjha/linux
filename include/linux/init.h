@@ -55,11 +55,7 @@
 #define __initdata	__data_section(init)
 #define __initconst	__const_section(init)
 #define __exitdata	__data_section(exit)
-#if defined(__ELF__)
-#define __exit_call	__used __section(.exitcall.exit)
-#elif defined(__MACH__)
-#define __exit_call	__used __section(DATA,exitcall)
-#endif
+#define __exit_call	__used __section_elf_macho(.exitcall.exit, DATA,exitcall)
 
 /*
  * modpost check for section mismatches during the kernel build.
@@ -140,7 +136,7 @@ static inline initcall_t initcall_from_entry(initcall_entry_t *entry)
 }
 #endif
 
-extern initcall_entry_t __con_initcall_start[] __sect_start(DATA,con_initcall), __con_initcall_end[] __sect_end(DATA,con_initcall);
+extern initcall_entry_t __con_initcall_start[], __con_initcall_end[];
 
 /* Used for contructor calls. */
 typedef void (*ctor_fn_t)(void);

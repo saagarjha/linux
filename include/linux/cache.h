@@ -57,7 +57,7 @@
 #elif defined(__MACH__)
 #define __cacheline_aligned					\
   __attribute__((__aligned__(SMP_CACHE_BYTES),			\
-		 __section__("__DATA,cache_aligned")))
+		 __section__("__DATA,__cache_aligned")))
 #endif
 #endif /* __cacheline_aligned */
 
