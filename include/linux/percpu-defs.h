@@ -19,24 +19,32 @@
 
 #ifdef CONFIG_SMP
 
+#if defined(__ELF__)
+#define __SHARED_ALIGNED "..shared_aligned"
+#define __FIRST "..first"
+#elif defined(__MACH__)
+#define __SHARED_ALIGNED "_shr_aln"
+#define __FIRST "_first"
+#endif
+
 #ifdef MODULE
 #define PER_CPU_SHARED_ALIGNED_SECTION ""
 #define PER_CPU_ALIGNED_SECTION ""
 #else
-#define PER_CPU_SHARED_ALIGNED_SECTION "..shared_aligned"
-#define PER_CPU_ALIGNED_SECTION "..shared_aligned"
+#define PER_CPU_SHARED_ALIGNED_SECTION __SHARED_ALIGNED
+#define PER_CPU_ALIGNED_SECTION __SHARED_ALIGNED
 #endif
-#define PER_CPU_FIRST_SECTION "..first"
+#define PER_CPU_FIRST_SECTION __FIRST
 
 #else
 
 #define PER_CPU_SHARED_ALIGNED_SECTION ""
-#define PER_CPU_ALIGNED_SECTION "..shared_aligned"
+#define PER_CPU_ALIGNED_SECTION __SHARED_ALIGNED
 #define PER_CPU_FIRST_SECTION ""
 
 #endif
 
-#ifdef __ELF__
+#if defined(__ELF__)
 
 /*
  * Base implementations of per-CPU variable declarations and definitions, where
@@ -55,9 +63,13 @@
 #define __PCPU_DUMMY_ATTRS						\
 	__attribute__((section(".discard"), unused))
 
-#else
-#define __PCPU_ATTRS(sec) __percpu PER_CPU_ATTRIBUTES
-#define __PCPU_DUMMY_ATTRS(sec)
+#elif defined(__MACH__)
+
+#define __PCPU_ATTRS(sec)                                                      \
+	__percpu __attribute__((section("__DATA,__percpu" sec)))                 \
+		PER_CPU_ATTRIBUTES
+#define __PCPU_DUMMY_ATTRS(sec) __attribute__((unused))
+
 #endif
 
 /*

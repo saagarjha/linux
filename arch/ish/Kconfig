@@ -10,6 +10,8 @@ config ISH
 	select GENERIC_SCHED_CLOCK
 	select GENERIC_CPU_DEVICES
 	select GENERIC_CLOCKEVENTS
+	select ARCH_USE_QUEUED_RWLOCKS
+	select ARCH_USE_QUEUED_SPINLOCKS
 
 config ISH_MAIN
 	bool
@@ -43,6 +45,15 @@ config SYSVIPC_COMPAT
 config MMU
 	bool
 	default y
+
+config SMP
+	bool "Symmetric multi-processing support"
+	default y
+config NR_CPUS
+	int "Maximum number of CPUs"
+	range 2 32
+	depends on SMP
+	default 32
 
 config HZ
 	int "HZ"

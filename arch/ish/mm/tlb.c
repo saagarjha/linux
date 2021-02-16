@@ -3,7 +3,7 @@
 #include <asm/processor.h>
 
 #ifdef CONFIG_SMP
-#error "still need to figure out SMP"
+#warning "still need to figure out SMP"
 #endif
 
 extern void emu_flush_tlb(struct emu_mm *mm, unsigned long start, unsigned long end);

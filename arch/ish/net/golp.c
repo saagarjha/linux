@@ -16,6 +16,7 @@ static int golp_dev_init(struct net_device *dev)
 
 	hash_init(priv->tcp_hash);
 	hash_init(priv->udp_hash);
+	spin_lock_init(&priv->sockets_lock);
 	err = host_pipe(&priv->irq_pipe_read, &priv->irq_pipe_write);
 	if (err < 0) return err;
 	err = fd_set_nonblock(priv->irq_pipe_read);
@@ -167,6 +168,7 @@ struct golp_socket *golp_socket_alloc(struct net_device *dev, int proto)
 	if (sock == NULL)
 		return NULL;
 	refcount_set(&sock->refcount, 1);
+	spin_lock_init(&sock->lock);
 	sock->protocol = proto;
 	sock->listener.irq = GOLP_IRQ;
 	sock->listener.pipe = priv->irq_pipe_write;

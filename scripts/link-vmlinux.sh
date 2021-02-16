@@ -124,8 +124,7 @@ vmlinux_link()
 	elif [ "${SRCARCH}" == "ish" ]; then
 		${CC} ${CFLAGS_vmlinux}				\
 			-o ${output}				\
-			$(kbuild_objects -Wl,) ${@}		\
-			-lpthread
+			$(kbuild_objects -Wl,) ${@}
 		rm -f linux
 	else
 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\

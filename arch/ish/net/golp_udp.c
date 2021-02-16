@@ -45,7 +45,7 @@ static int open_udp_socket(__be32 address, unsigned short port)
 
 static int get_local_addr_for_route(__be32 remote, __be32 *local)
 {
-	DEFINE_PER_CPU(int, sock_var) = -1;
+	static DEFINE_PER_CPU(int, sock_var) = -1;
 	int *sock_ptr;
 	int sock;
 	struct sockaddr_in sin = {.sin_family = AF_INET, .sin_port = 1};
