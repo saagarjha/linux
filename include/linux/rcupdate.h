@@ -290,13 +290,13 @@ static inline int rcu_read_lock_any_held(void)
  * @c: condition to check
  * @s: informative message
  */
-#define RCU_LOCKDEP_WARN(c, s)						\
-	do {								\
-		static bool __section(.data.unlikely) __warned;		\
-		if (debug_lockdep_rcu_enabled() && !__warned && (c)) {	\
-			__warned = true;				\
-			lockdep_rcu_suspicious(__FILE__, __LINE__, s);	\
-		}							\
+#define RCU_LOCKDEP_WARN(c, s)							\
+	do {									\
+		static bool __section_elf_macho(.data.unlikely,DATA,unlikely) __warned; \
+		if (debug_lockdep_rcu_enabled() && !__warned && (c)) {		\
+			__warned = true;					\
+			lockdep_rcu_suspicious(__FILE__, __LINE__, s);		\
+		}								\
 	} while (0)
 
 #if defined(CONFIG_PROVE_RCU) && !defined(CONFIG_PREEMPT_RCU)

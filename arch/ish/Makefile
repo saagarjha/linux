@@ -29,6 +29,7 @@ include arch/ish/Makefile.abi
 export CFLAGS_vmlinux
 CFLAGS_vmlinux += -lpthread
 CFLAGS_vmlinux += -sectalign __DATA __percpu_first 1000
+CFLAGS_vmlinux += -sectalign __DATA __tracepoints 20
 CFLAGS_vmlinux += -L../../build -lish_emu
 vmlinux: ../../build/libish_emu.a
 

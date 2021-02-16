@@ -28,6 +28,8 @@ config ARCH_RANDOM
 config ARCH_KALLSYMS
 	def_bool y
 
+config LOCKDEP_SUPPORT
+	def_bool y
 config STACKTRACE_SUPPORT
 	def_bool y
 config TRACE_IRQFLAGS_SUPPORT
