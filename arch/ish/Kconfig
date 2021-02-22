@@ -26,6 +26,7 @@ config ARCH_RANDOM
 	prompt "Host random number generator" if EXPERT
 
 config ARCH_KALLSYMS
+	depends on KALLSYMS
 	def_bool y
 
 config LOCKDEP_SUPPORT
@@ -58,7 +59,7 @@ config NR_CPUS
 	int "Maximum number of CPUs"
 	range 2 32
 	depends on SMP
-	default 32
+	default 8
 
 config HZ
 	int "HZ"

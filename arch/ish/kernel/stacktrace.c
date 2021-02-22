@@ -52,6 +52,7 @@ void show_stack(struct task_struct *task, unsigned long *stack,
 	walk_stack(task, show_stack_frame, (void *)loglvl);
 }
 
+#ifdef CONFIG_STACKTRACE
 void save_stack_frame(void *data, unsigned long addr, int reliable)
 {
 	struct stack_trace *trace = data;
@@ -66,3 +67,4 @@ void save_stack_trace(struct stack_trace *trace)
 {
 	walk_stack(current, save_stack_frame, trace);
 }
+#endif
