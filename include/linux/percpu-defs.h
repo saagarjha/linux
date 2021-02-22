@@ -17,8 +17,6 @@
 #ifndef _LINUX_PERCPU_DEFS_H
 #define _LINUX_PERCPU_DEFS_H
 
-#ifdef CONFIG_SMP
-
 #if defined(__ELF__)
 #define __SHARED_ALIGNED "..shared_aligned"
 #define __FIRST "..first"
@@ -26,6 +24,8 @@
 #define __SHARED_ALIGNED "_shr_aln"
 #define __FIRST "_first"
 #endif
+
+#ifdef CONFIG_SMP
 
 #ifdef MODULE
 #define PER_CPU_SHARED_ALIGNED_SECTION ""
