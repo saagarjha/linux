@@ -1,13 +1,12 @@
 #ifndef __ASM_ISH_PAGE_H
 #define __ASM_ISH_PAGE_H
+#include <linux/const.h>
 
 #define PAGE_SHIFT	12
-#ifdef __ASSEMBLY__
-#define PAGE_SIZE	(1 << PAGE_SHIFT)
-#else
-#define PAGE_SIZE	(1UL << PAGE_SHIFT)
-#endif
+#define PAGE_SIZE	(_UL(1) << PAGE_SHIFT)
 #define PAGE_MASK	(~(PAGE_SIZE-1))
+
+#ifndef __ASSEMBLY__
 
 typedef struct {
 	unsigned long pte;
@@ -54,6 +53,8 @@ extern unsigned long ish_phys_size;
 
 #define VMALLOC_START 0x10000
 #define VMALLOC_END (PAGE_OFFSET - 1)
+
+#endif /* !__ASSEMBLY__ */
 
 #include <asm-generic/getorder.h>
 

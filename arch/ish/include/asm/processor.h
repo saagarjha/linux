@@ -1,6 +1,8 @@
 #ifndef __ASM_ISH_PROCESSOR_H
 #define __ASM_ISH_PROCESSOR_H
 
+#ifndef __ASSEMBLY__
+
 #include <asm/ptrace.h>
 #include <emu/emu.h>
 #include <user/setjmp.h>
@@ -57,5 +59,7 @@ extern void start_thread(struct pt_regs *regs, unsigned long entry,
 
 #define STACK_TOP	TASK_SIZE
 #define STACK_TOP_MAX	STACK_TOP
+
+#endif
 
 #endif

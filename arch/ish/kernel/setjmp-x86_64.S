@@ -1,5 +1,11 @@
-.global _ksetjmp
-_ksetjmp:
+#ifdef __linux__
+#define SYM(x) x
+#else
+#define SYM(x) _##x
+#endif
+
+.global SYM(ksetjmp)
+SYM(ksetjmp):
 	pop %rsi
 	movq %rbx, 0(%rdi)
 	movq %rsp, 8(%rdi)
@@ -13,8 +19,8 @@ _ksetjmp:
 	xor %rax, %rax
 	ret
 
-.global _klongjmp
-_klongjmp:
+.global SYM(klongjmp)
+SYM(klongjmp):
 	movq %rsi, %rax
 	/* If we're magically calling a function, let the first argument be the
 	 * longjmp parameter. */

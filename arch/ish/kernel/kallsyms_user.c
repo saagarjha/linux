@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
@@ -10,6 +11,8 @@ const char *kallsyms_lookup(unsigned long addr, unsigned long *symbolsize, unsig
 	const char *module;
 	Dl_info info;
 	if (dladdr((const void *) addr, &info) == 0)
+		return NULL;
+	if (info.dli_sname == NULL)
 		return NULL;
 
 	if (offset)

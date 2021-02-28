@@ -4,15 +4,15 @@
 #define __NR_rt_sigreturn 173
 #define __NR_clock_gettime 265
 
-void __attribute__((naked)) __kernel_vsyscall()
+void __attribute__((naked)) __kernel_vsyscall(void)
 {
 	asm volatile("int $0x80; ret");
 }
-void __attribute__((naked)) __kernel_sigreturn()
+void __attribute__((naked)) __kernel_sigreturn(void)
 {
 	asm volatile("popl %%eax; movl %0, %%eax; int $0x80" :: "i" (__NR_sigreturn));
 }
-void __attribute__((naked)) __kernel_rt_sigreturn()
+void __attribute__((naked)) __kernel_rt_sigreturn(void)
 {
 	asm volatile("movl %0, %%eax; int $0x80" :: "i" (__NR_rt_sigreturn));
 }
@@ -42,7 +42,7 @@ long __vdso_time(long *t)
 	long secs;
 	asm volatile("int $0x80"
 		: "=a" (secs)
-		: "0" (__NR_time), "D" (t) : "cc", "r11", "cx", "memory");
+		: "0" (__NR_time), "D" (t) : "cc", "cx", "memory");
 	return secs;
 }
 long time(long *t) __attribute__((weak, alias("__vdso_time")));

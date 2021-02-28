@@ -1171,7 +1171,7 @@ archprepare: outputmakefile archheaders archscripts scripts include/config/kerne
 	include/generated/autoconf.h
 
 prepare0: archprepare
-ifdef CONFIG_HOST_LINUX
+ifndef CONFIG_ISH
 	$(Q)$(MAKE) $(build)=scripts/mod
 endif
 	$(Q)$(MAKE) $(build)=.

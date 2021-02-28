@@ -153,7 +153,7 @@ static void golp_tcp_tx_conn(struct golp_socket *sock, struct sk_buff *skb,
 	/* If the packet is not perfectly in sequence, drop. 3.9 p69 */
 	if (seq != sock->local_next)
 		return golp_drop_tx(dev, skb,
-				    "out of order: sending %lu, expected %lu",
+				    "out of order: sending %u, expected %u",
 				    seq, sock->local_next);
 
 	/* check rst */
@@ -176,10 +176,10 @@ static void golp_tcp_tx_conn(struct golp_socket *sock, struct sk_buff *skb,
 		return golp_drop_tx(dev, skb, "all packets must be ACKs");
 	if (before(ack_seq, sock->remote_unacked))
 		return golp_drop_tx(dev, skb,
-				    "duplicate ack %lu, already acked %lu",
+				    "duplicate ack %u, already acked %u",
 				    ack_seq, sock->remote_unacked);
 	if (after(ack_seq, sock->remote_next)) {
-		printk("golp: received future ack %lu, only got %lu", ack_seq,
+		printk("golp: received future ack %u, only got %u", ack_seq,
 		       sock->remote_next);
 		if (sock->local_syn == FL_ON) {
 			/* If the ACK acks something not yet sent
@@ -231,7 +231,7 @@ static void golp_tcp_tx_conn(struct golp_socket *sock, struct sk_buff *skb,
 				      ERR_PTR(pop_res));
 			else
 				panic("golp: short pop! %lu < %lu",
-				      pop_iov.base, pop_iov.len);
+				      pop_res, pop_iov.len);
 		}
 	}
 	sock->remote_unacked = ack_seq;
@@ -249,7 +249,7 @@ static void golp_tcp_tx_conn(struct golp_socket *sock, struct sk_buff *skb,
 		if (send_len < 0) {
 			pr_notice(
 				"golp: failed to send to remote, resetting: %pe\n",
-				send_len);
+				ERR_PTR(send_len));
 			return golp_tcp_reset(sock, dev);
 		}
 		sock->local_next += send_len;
@@ -480,7 +480,7 @@ static void golp_tcp_conn_rx(struct golp_socket *sock, struct net_device *dev)
 	if (seq >= sock->remote_next) {
 		sock->remote_next = seq;
 	} else {
-		panic("golp: data fell off the back of the queue! got to %lu, want %lu\n",
+		panic("golp: data fell off the back of the queue! got to %u, want %u\n",
 		      seq, sock->remote_next);
 	}
 }

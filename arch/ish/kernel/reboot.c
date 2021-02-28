@@ -20,5 +20,9 @@ void machine_restart(char *cmd)
 
 void machine_emergency_restart(void)
 {
+#if defined(__clang__)
 	__builtin_debugtrap();
+#else
+	__builtin_trap();
+#endif
 }

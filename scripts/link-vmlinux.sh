@@ -122,9 +122,18 @@ vmlinux_link()
 			-lutil -lrt -lpthread
 		rm -f linux
 	elif [ "${SRCARCH}" == "ish" ]; then
-		${CC} ${CFLAGS_vmlinux}				\
-			-o ${output}				\
-			$(kbuild_objects -Wl,) ${@}
+		if [ "$(uname)" = "Darwin" ]; then
+			${CC} ${CFLAGS_vmlinux}			\
+				-o ${output}			\
+				$(kbuild_objects -Wl,) ${@}
+		else
+			${CC} ${CFLAGS_vmlinux}			\
+				-o ${output}			\
+				-Wl,-T,${lds}			\
+				$(kbuild_objects -Wl,) ${@}	\
+				-L../../build -lish_emu		\
+				-lpthread -lm -ldl
+		fi
 		rm -f linux
 	else
 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\

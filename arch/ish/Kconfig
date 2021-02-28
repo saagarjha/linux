@@ -21,10 +21,6 @@ config ISH_EMULATOR
 	string
 	default ishemu
 
-config ARCH_RANDOM
-	def_bool y
-	prompt "Host random number generator" if EXPERT
-
 config ARCH_KALLSYMS
 	depends on KALLSYMS
 	def_bool y

@@ -49,7 +49,7 @@ static struct block_device_operations ivd_fops = {
 };
 
 static int ivd_major;
-static int __init ivd_init()
+static int __init ivd_init(void)
 {
 	struct ivd *ivd;
 	int err;

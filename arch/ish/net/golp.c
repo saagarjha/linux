@@ -276,7 +276,7 @@ static int golp_socket_hash_read(struct seq_file *seq, void *data)
 	return 0;
 }
 
-static int __init golp_init()
+static int __init golp_init(void)
 {
 	int err;
 	struct net_device *dev = alloc_netdev(sizeof(struct golp_priv),

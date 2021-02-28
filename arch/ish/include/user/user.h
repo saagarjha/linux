@@ -1,5 +1,8 @@
 #ifndef __ISH_HOST_H
 #define __ISH_HOST_H
+#ifndef __KERNEL__
+#include <stdint.h>
+#endif
 
 void *host_mmap(void *addr, size_t len);
 uint64_t host_monotonic_nanos(void);

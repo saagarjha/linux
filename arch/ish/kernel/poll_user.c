@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <poll.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <user/errno.h>
 #include <user/poll.h>

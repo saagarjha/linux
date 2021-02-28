@@ -1,6 +1,8 @@
 #ifndef __ASM_ISH_PTRACE_H
 #define __ASM_ISH_PTRACE_H
 
+#ifndef __ASSEMBLY__
+
 struct pt_regs {
 	unsigned long ax;
 	unsigned long bx;
@@ -27,5 +29,7 @@ struct pt_regs {
 
 int trace_syscall_enter(struct pt_regs *regs);
 void trace_syscall_exit(struct pt_regs *regs);
+
+#endif
 
 #endif

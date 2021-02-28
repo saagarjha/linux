@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -14,6 +15,7 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+
 #include <user/user.h>
 #include <user/errno.h>
 #include <user/fs.h>
@@ -125,7 +127,6 @@ static void sockaddr_from_kernel(void *name, int name_len)
 	struct kernel_sockaddr *kernel_name = name;
 	if (name) {
 		host_name->sa_family = kernel_name->family;
-		host_name->sa_len = name_len;
 	}
 }
 static void sockaddr_to_kernel(void *name, int name_len)
@@ -239,7 +240,7 @@ int host_get_so_nwrite(int fd, uint32_t *res)
 #if defined(__APPLE__)
 	return __host_getsockopt(fd, SOL_SOCKET, SO_NWRITE, res, sizeof(*res));
 #elif defined(__linux__)
-	int err = ioctl(fd, SIOCOUTQ, res);
+	int err = ioctl(fd, TIOCOUTQ, res);
 	if (err < 0)
 		return errno_map();
 	return 0;

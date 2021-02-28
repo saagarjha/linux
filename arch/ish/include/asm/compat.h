@@ -1,7 +1,7 @@
 #ifndef __ASM_ISH_COMPAT_H
 #define __ASM_ISH_COMPAT_H
 
-static inline bool in_ia32_syscall()
+static inline bool in_ia32_syscall(void)
 {
 	return true;
 }

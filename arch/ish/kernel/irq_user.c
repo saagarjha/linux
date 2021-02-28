@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include <user/fs.h>
 #include <user/irq.h>
@@ -55,6 +56,9 @@ static void *poll_thread(void *dummy)
 	for (;;) {
 		/* TODO handle errors */
 		int err = real_poll_wait(&poller, &event, 1, NULL);
+		if (err != 1) {
+			panic("failed real_poll_wait: %d\n", err);
+		}
 		struct fd_listener *listener = rpe_data(&event);
 		if (listener->data) {
 			err = write(listener->pipe, &listener->data, sizeof(listener->data));

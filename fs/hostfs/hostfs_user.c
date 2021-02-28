@@ -21,6 +21,7 @@
 
 #ifndef __APPLE__
 #include <sys/vfs.h>
+#include <sys/sysmacros.h>
 #endif
 #include <sys/mount.h>
 

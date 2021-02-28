@@ -7,6 +7,8 @@
 #define THREAD_SIZE_ORDER (1)
 #define THREAD_SIZE (PAGE_SIZE << (THREAD_SIZE_ORDER))
 
+#ifndef __ASSEMBLY__
+
 // TODO is all this necessary?
 struct thread_info {
 	unsigned long		flags;		/* low level flags */
@@ -22,5 +24,7 @@ struct thread_info {
 #define TIF_SIGPENDING		1	/* signal pending */
 #define TIF_NEED_RESCHED	2	/* rescheduling necessary */
 #define TIF_MEMDIE		5	/* is terminating due to OOM killer */
+
+#endif
 
 #endif

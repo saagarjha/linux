@@ -63,9 +63,9 @@ static inline void golp_socket_put(struct golp_socket *sock)
 		__golp_socket_destroy(sock);
 }
 
-void __golp_drop_tx(struct net_device *dev, struct sk_buff *skb, const char *msg, ...);
+void __golp_drop_tx(struct net_device *dev, struct sk_buff *skb, const char *msg, ...) __printf(3, 4);
 #define golp_drop_tx(dev, skb, msg, ...) __golp_drop_tx(dev, skb, KERN_INFO "golp: dropping outgoing packet: " msg "\n", ##__VA_ARGS__)
-void __golp_drop_rx(struct net_device *dev, const char *msg, ...);
+void __golp_drop_rx(struct net_device *dev, const char *msg, ...) __printf(2, 3);
 #define golp_drop_rx(dev, msg, ...) __golp_drop_rx(dev, KERN_INFO "golp: dropping incoming packet: " msg "\n", ##__VA_ARGS__)
 
 int golp_ping_up(struct net_device *dev);

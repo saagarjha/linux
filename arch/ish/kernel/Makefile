@@ -1,4 +1,9 @@
-extra-y += sections.o
+ifdef CONFIG_HOST_DARWIN
+	extra-y += sections.o
+endif
+ifdef CONFIG_HOST_LINUX
+	extra-y += vmlinux.lds
+endif
 
 obj-y := cpu.o irq.o mem.o reboot.o setup.o signal.o time.o trap.o process.o \
 	ptrace.o uaccess.o syscalls.o tls.o stacktrace.o

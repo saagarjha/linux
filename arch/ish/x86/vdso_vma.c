@@ -5,16 +5,21 @@
 #include <asm/page.h>
 #include <asm/vdso.h>
 
+#ifdef __linux__
+#define sym
+#else
+#define sym "_"
+#endif
 asm(".data\n\t"
     ".balign " __stringify(PAGE_SIZE) "\n\t"
-    "_vdso_data:\n\t"
+    sym"vdso_data:\n\t"
     ".incbin \"" __stringify(LIBVDSO_SO) "\"\n\t"
     ".balign " __stringify(PAGE_SIZE) "\n\t"
-    "_vdso_data_end:");
+    sym"vdso_data_end:");
 extern char vdso_data[], vdso_data_end[];
 
 struct vdso_syms vdso_syms = {
-#include __stringify(VDSO_SYM_H)
+#include <generated/vdso-offsets.h>
 };
 
 static unsigned vdso_pages;
