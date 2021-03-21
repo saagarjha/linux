@@ -60,6 +60,7 @@ static unsigned int table_size, table_cnt;
 static int all_symbols;
 static int absolute_percpu;
 static int base_relative;
+static int mach_o;
 
 static int token_profit[0x10000];
 
@@ -71,7 +72,7 @@ static unsigned char best_table_len[256];
 static void usage(void)
 {
 	fprintf(stderr, "Usage: kallsyms [--all-symbols] "
-			"[--base-relative] < in.map > out.S\n");
+			"[--base-relative] [--mach-o] < in.map > out.S\n");
 	exit(1);
 }
 
@@ -317,9 +318,10 @@ static void read_map(FILE *in)
 
 static void output_label(const char *label)
 {
-	printf(".globl %s\n", label);
+	const char *prefix = mach_o ? "_" : "";
+	printf(".globl %s%s\n", prefix, label);
 	printf("\tALGN\n");
-	printf("%s:\n", label);
+	printf("%s%s:\n", prefix, label);
 }
 
 /* Provide proper symbols relocatability by their '_text' relativeness. */
@@ -379,7 +381,11 @@ static void write_src(void)
 	printf("#define ALGN .balign 4\n");
 	printf("#endif\n");
 
-	printf("\t.section .rodata, \"a\"\n");
+	if (mach_o) {
+		printf("\t.section __TEXT, __const\n");
+	} else {
+		printf("\t.section .rodata, \"a\"\n");
+	}
 
 	if (!base_relative)
 		output_label("kallsyms_addresses");
@@ -425,8 +431,15 @@ static void write_src(void)
 	printf("\n");
 
 	if (base_relative) {
-		output_label("kallsyms_relative_base");
-		output_address(relative_base);
+		if (mach_o) {
+			printf(".pushsection __DATA, __const\n");
+			output_label("kallsyms_relative_base");
+			output_address(relative_base - 0x100000000);
+			printf(".popsection\n");
+		} else {
+			output_label("kallsyms_relative_base");
+			output_address(relative_base);
+		}
 		printf("\n");
 	}
 
@@ -752,6 +765,8 @@ int main(int argc, char **argv)
 				absolute_percpu = 1;
 			else if (strcmp(argv[i], "--base-relative") == 0)
 				base_relative = 1;
+			else if (strcmp(argv[i], "--mach-o") == 0)
+				mach_o = 1;
 			else
 				usage();
 		}

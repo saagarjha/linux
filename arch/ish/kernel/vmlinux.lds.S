@@ -9,6 +9,7 @@ SECTIONS
 {
 	. = SIZEOF_HEADERS;
 
+	_text = .;
 	__init_begin = .;
 	HEAD_TEXT_SECTION
 	INIT_TEXT_SECTION(PAGE_SIZE)

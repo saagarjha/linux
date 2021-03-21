@@ -116,7 +116,7 @@ static inline struct tracepoint *tracepoint_ptr_deref(tracepoint_ptr_t *p)
 
 #define __TRACEPOINT_ENTRY(name)					 \
 	static tracepoint_ptr_t __tracepoint_ptr_##name __used		 \
-	__section_elf_macho(__tracepoints_ptrs, TEXT,tracepts_ptrs) = \
+	__section_elf_macho(__tracepoints_ptrs, DATA,tracepts_ptrs) = \
 		&__tracepoint_##name
 #endif
 

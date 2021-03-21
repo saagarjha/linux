@@ -14,7 +14,7 @@
 
 #define __text_section(s) __section_elf_macho(.s.text, TEXT,s,regular,pure_instructions)
 #define __data_section(s) __section_elf_macho(.s.data, DATA,s)
-#define __const_section(s) __section_elf_macho(.s.rodata, TEXT,const_##s)
+#define __const_section(s) __section_elf_macho(.s.rodata, DATA,const_##s)
 
 /* These macros are used to mark some functions or 
  * initialized data (doesn't apply to uninitialized data)

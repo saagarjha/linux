@@ -23,7 +23,8 @@ config ISH_EMULATOR
 
 config ARCH_KALLSYMS
 	depends on KALLSYMS
-	def_bool y
+	bool "Use dladdr for kallsyms"
+	default y
 
 config LOCKDEP_SUPPORT
 	def_bool y

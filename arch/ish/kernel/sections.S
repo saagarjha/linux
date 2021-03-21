@@ -86,6 +86,7 @@
 .endm
 
 .macro TEXT_SECTION
+	s_seg	TEXT,		text
 	s_seg	TEXT,		_stext
 
 	sect	TEXT,text
@@ -110,28 +111,27 @@
 .endm
 
 .macro RO_DATA_SECTION
-	s_sect	TEXT,const,	__start_rodata
-	sect	TEXT,const
-	sect	TEXT,const_init
-	/* sect	TEXT,cstring */
+	s_sect	DATA,const,	__start_rodata
+	sect	DATA,const
+	sect	DATA,const_init
 
-	s_sect	TEXT,tracepts_ptrs, __start___tracepoints_ptrs
-	sect	TEXT,tracepts_ptrs
-	e_sect	TEXT,tracepts_ptrs, __stop___tracepoints_ptrs
-	s_sect	TEXT,param,	__start___param
-	sect	TEXT,param
-	e_sect	TEXT,param,	__stop___param
-	s_sect	TEXT,modver,	__start___modver
-	sect	TEXT,modver
-	e_sect	TEXT,modver,	__stop___modver
-	s_sect	TEXT,ex_table,	__start___ex_table
-	sect	TEXT,ex_table
-	e_sect	TEXT,ex_table,	__stop___ex_table
-	s_sect	TEXT,notes,	__start_notes
-	sect	TEXT,notes
-	e_sect	TEXT,notes,	__stop_notes
+	s_sect	DATA,tracepts_ptrs, __start___tracepoints_ptrs
+	sect	DATA,tracepts_ptrs
+	e_sect	DATA,tracepts_ptrs, __stop___tracepoints_ptrs
+	s_sect	DATA,const_param, __start___param
+	sect	DATA,const_param
+	e_sect	DATA,const_param, __stop___param
+	s_sect	DATA,const_modver,	__start___modver
+	sect	DATA,const_modver
+	e_sect	DATA,const_modver,	__stop___modver
+	s_sect	DATA,const_ex_table,	__start___ex_table
+	sect	DATA,const_ex_table
+	e_sect	DATA,const_ex_table,	__stop___ex_table
+	s_sect	DATA,const_notes,	__start_notes
+	sect	DATA,const_notes
+	e_sect	DATA,const_notes,	__stop_notes
 
-	e_sect	TEXT,notes,	__end_rodata
+	e_sect	DATA,const_notes,	__end_rodata
 .endm
 
 .macro RW_DATA_SECTION

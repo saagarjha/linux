@@ -289,7 +289,7 @@ struct kparam_array
 	/* Default value instead of permissions? */			\
 	static const char __param_str_##name[] = prefix #name;		\
 	static struct kernel_param __moduleparam_const __param_##name	\
-	__used	__section_elf_macho(__param,TEXT,param)			\
+	__used	__section_elf_macho(__param,DATA,const_param)		\
 	__attribute__ ((unused,aligned(sizeof(void *))))		\
 	= { __param_str_##name, THIS_MODULE, ops,			\
 	    VERIFY_OCTAL_PERMISSIONS(perm), level, flags, { arg } }

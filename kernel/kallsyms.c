@@ -49,6 +49,19 @@ extern const u16 kallsyms_token_index[] __weak;
 
 extern const unsigned int kallsyms_markers[] __weak;
 
+#ifdef __MACH__
+const unsigned long kallsyms_addresses[0] __weak;
+const int kallsyms_offsets[0] __weak;
+const u8 kallsyms_names[0] __weak;
+const unsigned int kallsyms_num_syms
+__weak __section_elf_macho(.rodata, DATA,const);
+const unsigned long kallsyms_relative_base
+__weak __section_elf_macho(.rodata, DATA,const);
+const char kallsyms_token_table[0] __weak;
+const u16 kallsyms_token_index[0] __weak;
+const unsigned int kallsyms_markers[0] __weak;
+#endif
+
 /*
  * Expand a compressed symbol data into the resulting uncompressed string,
  * if uncompressed string is too long (>= maxlen), it will be truncated,
