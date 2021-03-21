@@ -62,7 +62,7 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	return interrupt;
 }
 
-void emu_flush_tlb(struct emu_mm *mm, unsigned long start, unsigned long end)
+void emu_flush_tlb_local(struct emu_mm *mm, unsigned long start, unsigned long end)
 {
 	if (the_tlb.mmu == NULL)
 		return;

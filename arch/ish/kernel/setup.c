@@ -8,12 +8,14 @@
 #include <linux/start_kernel.h>
 #include <user/user.h>
 #include <user/errno.h>
+#include "irq_user.h"
 
 char *empty_zero_page;
 
 void __init setup_arch(char **cmdline_p)
 {
 	unsigned long zone_pfns[MAX_NR_ZONES] = {};
+	unsigned i;
 
 	*cmdline_p = boot_command_line;
 	parse_early_param();
@@ -31,13 +33,15 @@ void __init setup_arch(char **cmdline_p)
 	max_low_pfn = ish_phys_size >> PAGE_SHIFT;
 	max_mapnr = max_pfn = max_low_pfn;
 	
-	/* TODO @smp: do this for each kernel thread */
-	host_block_sigpipe();
+	for (i = 0; i < nr_cpu_ids; i++)
+		set_cpu_possible(i, true);
+
+	user_setup_thread();
 }
 
 void run_kernel(void)
 {
-	current = &init_task;
+	__current = &init_task;
 	KSTK_ESP(current) = (unsigned long)task_stack_page(current) +
 			    THREAD_SIZE - sizeof(void *);
 	KSTK_EIP(current) = (unsigned long)start_kernel;

@@ -2,16 +2,24 @@
 #include <asm/tlbflush.h>
 #include <asm/processor.h>
 
-#ifdef CONFIG_SMP
-#warning "still need to figure out SMP"
-#endif
+extern void emu_flush_tlb_local(struct emu_mm *mm, unsigned long start, unsigned long end);
 
-extern void emu_flush_tlb(struct emu_mm *mm, unsigned long start, unsigned long end);
-
+struct flush_tlb_args {
+	struct emu_mm *mm;
+	unsigned long start;
+	unsigned long end;
+};
+static void __call_emu_flush_tlb(void *info)
+{
+	struct flush_tlb_args *args = info;
+	emu_flush_tlb_local(args->mm, args->start, args->end);
+}
 static void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start, unsigned long end)
 {
-	emu_flush_tlb(&mm->context.emu_mm, start, end);
+	struct flush_tlb_args args = {&mm->context.emu_mm, start, end};
+	on_each_cpu_mask(mm_cpumask(mm), __call_emu_flush_tlb, &args, true);
 }
+
 void flush_tlb_mm(struct mm_struct *mm)
 {
 	flush_tlb_mm_range(mm, 0, TASK_SIZE);

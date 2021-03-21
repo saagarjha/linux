@@ -1,3 +1,4 @@
+generic-y += asm-offsets.h
 generic-y += cache.h
 generic-y += extable.h
 generic-y += irqflags.h

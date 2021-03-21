@@ -8,11 +8,17 @@ endif
 obj-y := cpu.o irq.o mem.o reboot.o setup.o signal.o time.o trap.o process.o \
 	ptrace.o uaccess.o syscalls.o tls.o stacktrace.o
 
-obj-y += syscalls_user.o irq_user.o time_user.o poll_user.o
+obj-y += syscalls_user.o irq_user.o time_user.o poll_user.o setup_user.o
 obj-y += setjmp-$(shell uname -m).o # TODO this is disgusting and won't make sense if you want to cross compile
+CFLAGS_irq_user.o += -I$(srctree)/arch/ish/include/generated -I$(srctree)/include # for asm/irqflags.h
 
 obj-$(CONFIG_EARLY_PRINTK) += early_printk.o
 obj-$(CONFIG_SMP) += smp.o
 obj-$(CONFIG_ARCH_KALLSYMS) += kallsyms.o kallsyms_user.o
+ifdef CONFIG_SMP
+	USER_CFLAGS += -DNR_CPUS=$(CONFIG_NR_CPUS)
+else
+	USER_CFLAGS += -DNR_CPUS=1
+endif
 
 include arch/um/scripts/Makefile.rules

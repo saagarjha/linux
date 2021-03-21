@@ -2,8 +2,9 @@
 #define __IRQ_USER_H
 
 void user_init_IRQ(void);
-void user_set_irqs_enabled(int enabled);
+void user_setup_thread(void);
 
-void handle_irq(int irq);
+int check_irqs(void);
+void trigger_irq_check(int cpu);
 
 #endif

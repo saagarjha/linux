@@ -131,7 +131,7 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 {
 	struct task_struct *last;
 
-	current = to;
+	__current = to;
 	last = (void *) ksetjmp(from->thread.kernel_regs);
 	if (last == NULL)
 		klongjmp(to->thread.kernel_regs, (unsigned long) from);
@@ -139,12 +139,6 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 	return last;
 }
 
-void arch_cpu_idle(void)
-{
-	local_irq_enable();
-	host_pause();
-}
-
-__thread struct task_struct *current;
+__thread struct task_struct *__current;
 
 unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];

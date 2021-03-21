@@ -3,8 +3,10 @@
 
 #define TIMER_IRQ 0
 #define STDIN_IRQ 1
-#define HOST_INET_IRQ 3
-#define GOLP_IRQ 4
-#define NR_IRQS 8
+#define HOST_INET_IRQ 2
+#define GOLP_IRQ 3
+#define IPI_CALL_FUNC 8
+#define IPI_RESCHEDULE 9
+#define NR_IRQS 16
 
 #endif

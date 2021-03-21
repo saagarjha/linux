@@ -4,52 +4,111 @@
 #include <asm/irqflags.h>
 #include "irq_user.h"
 
-/* TODO @smp make this percpu */
-static int irqs_enabled = ARCH_IRQ_DISABLED;
+static DEFINE_PER_CPU(int, irqs_enabled) = ARCH_IRQ_DISABLED;
 
 unsigned long arch_local_save_flags(void)
 {
-	return irqs_enabled;
+	int enabled;
+	if (!in_kernel())
+		return 0;
+	enabled = get_cpu_var(irqs_enabled);
+	put_cpu_var(irqs_enabled);
+	return enabled;
 }
 
 void arch_local_irq_restore(unsigned long enabled)
 {
-	/* Don't try to enable interrupts while in a hardirq! This would
-	 * interact badly with the signal mask changing behavior of the signal
-	 * handler. */
-	BUG_ON(enabled && in_irq());
-	if (irqs_enabled == enabled)
+	if (!in_kernel())
 		return;
-	/* Interrupts should be disabled while flipping the flag. */
-	if (irqs_enabled) {
-		/* turning interrupts on */
-		user_set_irqs_enabled(enabled);
-		irqs_enabled = enabled;
-	} else {
-		/* turning interrupts off */
-		irqs_enabled = enabled;
-		user_set_irqs_enabled(enabled);
-	}
+
+	/* When this check was added, enabling interrupts would unmask SIGUSR1
+	 * and interact badly with the implicit masking of SIGUSR1 on handler
+	 * entry. We no longer change the signal mask, so I don't know if this
+	 * is still necessary to check. But it's not breaking anything, so I
+	 * see no harm in keeping it. Enabling IRQs while in an IRQ is a
+	 * strange thing to do anyway. */
+	BUG_ON(enabled && in_irq());
+
+	get_cpu_var(irqs_enabled) = enabled;
+	put_cpu_var(irqs_enabled);
+	if (enabled)
+		check_irqs();
 }
 
-void handle_irq(int irq)
+/* This is used to send messages to other CPUs, so accesses should use
+ * appropriate SMP barriers. */
+static DEFINE_PER_CPU(unsigned long, irq_pending);
+
+void trigger_irq_on_cpu(int irq, int cpu)
 {
-	static struct pt_regs dummy_irq_regs;
-	struct pt_regs *old_regs = set_irq_regs(&dummy_irq_regs);
+	/* Set bit with release semantics */
+	/* TODO: This may be broken without CONFIG_SMP, as this still crosses threads. */
+	smp_mb__before_atomic();
+	set_bit(irq, &per_cpu(irq_pending, cpu));
+	trigger_irq_check(cpu);
+}
 
-	/* Entering a signal handler blocked the signal. Update the variable to
-	 * reflect this. */
-	BUG_ON(!irqs_enabled);
-	irqs_enabled = 0;
-	trace_hardirqs_off();
+void trigger_irq(int irq)
+{
+	/* If it doesn't matter, just send it to CPU 0. */
+	trigger_irq_on_cpu(irq, 0);
+}
 
-	irq_enter();
-	generic_handle_irq(irq);
-	irq_exit();
-	set_irq_regs(old_regs);
+/* This needs to be async signal safe with itself (though not with anything else). */
+int check_irqs(void)
+{
+	int irq;
+	unsigned long *pending;
+	int *enabled_irqs;
+	int got_irq = 0, loop_got_irq;
 
-	trace_hardirqs_on();
-	irqs_enabled = 1;
+	if (!in_kernel())
+		/* This should only be called on kernel threads. Not using BUG
+		 * because BUG only works on kernel threads anyway. */
+		__builtin_trap();
+
+	enabled_irqs = get_cpu_ptr(&irqs_enabled);
+	if (!*enabled_irqs) {
+		put_cpu_ptr(&irqs_enabled);
+		return 0;
+	}
+
+	pending = get_cpu_ptr(&irq_pending);
+	do {
+		loop_got_irq = 0;
+		for (irq = 0; irq < NR_IRQS; irq++) {
+			static struct pt_regs dummy_irq_regs;
+			struct pt_regs *old_regs;
+
+			/* This needs at least acquire semantics, but no
+			 * barriers are actually needed as the atomic op has
+			 * implicit barriers. */
+			if (!test_and_clear_bit(irq, pending))
+				continue;
+
+			got_irq = loop_got_irq = 1;
+			old_regs = set_irq_regs(&dummy_irq_regs);
+
+			/* Only compiler barriers are needed here, as this only
+			 * needs to synchronize with a signal handler. */
+			*enabled_irqs = 0;
+			barrier();
+			trace_hardirqs_off();
+
+			irq_enter();
+			generic_handle_irq(irq);
+			irq_exit();
+			set_irq_regs(old_regs);
+
+			trace_hardirqs_on();
+			barrier();
+			*enabled_irqs = 1;
+		}
+	} while (loop_got_irq);
+
+	put_cpu_ptr(&irq_pending);
+	put_cpu_ptr(&irqs_enabled);
+	return got_irq;
 }
 
 void __init init_IRQ(void)

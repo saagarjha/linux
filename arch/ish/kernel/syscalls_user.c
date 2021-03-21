@@ -16,6 +16,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
+
 #include <user/user.h>
 #include <user/errno.h>
 #include <user/fs.h>
@@ -345,10 +349,19 @@ uint64_t host_unix_nanos(void)
 	return ts.tv_sec * 1000000000 + ts.tv_nsec;
 }
 
-void host_block_sigpipe(void)
+#if defined(__linux__)
+int host_get_nproc(void)
 {
-	sigset_t set;
-	sigemptyset(&set);
-	sigaddset(&set, SIGPIPE);
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
+	return sysconf(_SC_NPROCESSORS_ONLN);
 }
+#elif defined(__APPLE__)
+int host_get_nproc(void)
+{
+	int nproc = -1;
+	size_t sizeof_nproc = sizeof(nproc);
+	int err = sysctlbyname("hw.activecpu", &nproc, &sizeof_nproc, NULL, 0);
+	if (err < 0)
+		return errno_map();
+	return nproc;
+}
+#endif

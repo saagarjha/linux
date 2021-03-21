@@ -39,37 +39,45 @@ static struct clocksource host_clocksource = {
 
 static int host_timer_next_event(unsigned long ns, struct clock_event_device *ce)
 {
-	timer_set_next_event(ns);
+	timer_set_next_event(smp_processor_id(), ns);
 	return 0;
 }
 static int host_timer_state_shutdown(struct clock_event_device *ce)
 {
-	return host_timer_next_event(0, ce);
+	timer_set_next_event(smp_processor_id(), UINT64_MAX);
+	return 0;
 }
 static int host_timer_state_oneshot(struct clock_event_device *ce)
 {
 	return 0;
 }
 
-static struct clock_event_device host_clockevents = {
+static DEFINE_PER_CPU(struct clock_event_device, host_clockevents) = {
 	.name = "host-timer",
 	.rating = 300,
 	.features = CLOCK_EVT_FEAT_ONESHOT,
 	.set_next_event = host_timer_next_event,
 	.set_state_oneshot = host_timer_state_oneshot,
 	.set_state_shutdown = host_timer_state_shutdown,
-	.max_delta_ns = 0xffffffff,
+	.max_delta_ns = INT64_MAX,
 	.mult = 1,
 };
 
 static irqreturn_t timer_irq(int irq, void *dev_id)
 {
-	struct clock_event_device *dev = dev_id;
+	struct clock_event_device *dev = this_cpu_ptr(&host_clockevents);
 	dev->event_handler(dev);
 	return IRQ_HANDLED;
 }
 
 #define GHZ 1000000000
+
+void __init local_timer_init(void) {
+	struct clock_event_device *local_clockevents = this_cpu_ptr(&host_clockevents);
+	BUG_ON(local_clockevents->cpumask != NULL);
+	local_clockevents->cpumask = cpumask_of(smp_processor_id());
+	clockevents_register_device(local_clockevents);
+}
 
 void __init time_init(void)
 {
@@ -81,10 +89,12 @@ void __init time_init(void)
 		pr_err("clocksource: failed to register host: %d\n", err);
 	}
 
-	err = request_irq(TIMER_IRQ, timer_irq, IRQF_TIMER, "hr timer", &host_clockevents);
+	irq_set_handler(TIMER_IRQ, handle_percpu_irq);
+	err = request_irq(TIMER_IRQ, timer_irq, IRQF_TIMER, "timer", NULL);
 	if (err) {
 		pr_err("timer: failed to request_irq: %d\n", err);
+		return;
 	}
 	timer_start_thread();
-	clockevents_register_device(&host_clockevents);
+	local_timer_init();
 }

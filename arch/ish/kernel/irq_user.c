@@ -4,39 +4,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <errno.h>
 
+#include <asm/irqflags.h>
 #include <user/fs.h>
 #include <user/irq.h>
 #include <user/poll.h>
 #include "irq_user.h"
 
-static pthread_t irq_thread;
+extern pthread_t cpu_thread(int cpu);
 
-/* TODO @smp: make something per-cpu */
-static int irq_pending[NR_IRQS];
-static pthread_mutex_t irq_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static void sigusr1_handler(int signal)
+void trigger_irq_check(int cpu)
 {
-	pthread_mutex_lock(&irq_lock);
-	for (int irq = 0; irq < NR_IRQS; irq++) {
-		if (irq_pending[irq]) {
-			irq_pending[irq] = 0;
-			pthread_mutex_unlock(&irq_lock);
-			handle_irq(irq);
-			pthread_mutex_lock(&irq_lock);
-		}
-	}
-	pthread_mutex_unlock(&irq_lock);
-}
-
-void trigger_irq(int irq)
-{
-	/* must not be called from a kernel thread, or may deadlock! */
-	pthread_mutex_lock(&irq_lock);
-	irq_pending[irq] = 1;
-	pthread_mutex_unlock(&irq_lock);
-	pthread_kill(irq_thread, SIGUSR1);
+	pthread_kill(cpu_thread(cpu), SIGUSR1);
 }
 
 static struct real_poll poller;
@@ -54,8 +34,9 @@ static void *poll_thread(void *dummy)
 {
 	struct real_poll_event event;
 	for (;;) {
-		/* TODO handle errors */
 		int err = real_poll_wait(&poller, &event, 1, NULL);
+		if (err < 0 && errno == EINTR)
+			continue;
 		if (err != 1) {
 			panic("failed real_poll_wait: %d\n", err);
 		}
@@ -67,24 +48,54 @@ static void *poll_thread(void *dummy)
 	}
 }
 
-void user_set_irqs_enabled(int enabled)
+static void sigusr1_handler(int signal)
 {
-	sigset_t set;
-	int err;
-	sigemptyset(&set);
-	sigaddset(&set, SIGUSR1);
-	err = pthread_sigmask(enabled ? SIG_UNBLOCK : SIG_BLOCK, &set, NULL);
-	if (err != 0)
-		panic("pthread_sigmask failed");
+	check_irqs();
 }
 
 void user_init_IRQ(void)
 {
 	signal(SIGUSR1, sigusr1_handler);
-	irq_thread = pthread_self();
 
 	real_poll_init(&poller);
 	pthread_t t;
 	pthread_create(&t, NULL, poll_thread, NULL);
 	pthread_detach(t);
+}
+
+void arch_cpu_idle(void)
+{
+	/* This is done this way in order to be atomic.
+	 * - If an IRQ arrives before arch_local_irq_enable, it will be handled
+	 *   by the check_irqs call.
+	 * - If an IRQ arrives after that, it will be handled during the call
+	 *   to sigsuspend.
+	 *
+	 * In no case will it block indefinitely. The obvious ways of doing
+	 * this, such as local_irq_enable(); pause();, have a race window
+	 * between local_irq_enable() and pause() where an IRQ could be handled
+	 * and pause() would still get called and block indefinitely, having
+	 * missed the IRQ.
+	 *
+	 * x86 does sti; hlt; in asm, which at first glance seems like the same
+	 * as local_irq_enable(); pause();, but in fact it is atomic because
+	 * sti waits for the next instruction to complete before enabling IRQs.
+	 */
+
+	sigset_t set, old;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &set, &old);
+	arch_local_irq_enable();
+	if (!check_irqs())
+		sigsuspend(&old);
+	pthread_sigmask(SIG_SETMASK, &old, NULL);
+}
+
+void user_setup_thread(void)
+{
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGPIPE);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
 }

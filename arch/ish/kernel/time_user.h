@@ -5,6 +5,7 @@
 #endif
 
 void timer_start_thread(void);
-void timer_set_next_event(uint64_t ns);
+void timer_set_next_event(int cpu, uint64_t ns);
+void local_timer_init(void);
 
 #endif

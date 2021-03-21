@@ -4,20 +4,30 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <user/user.h>
 #include <user/poll.h>
 #include <user/irq.h>
 #include "time_user.h"
+#include "irq_user.h"
 
 static int timer_pipe[2];
 
 /* TODO error handling */
 
-static void *timer_thread(void *dummy)
+struct timer_msg {
+	int cpu;
+	int active;
+	uint64_t expires;
+};
+
+static void *timer_thread(void *fuck)
 {
 	struct real_poll poll;
 	int flags;
-	uint64_t interval;
-	int active = 0;
+	struct timer {
+		int active;
+		uint64_t expires;
+	} timers[NR_CPUS] = {};
 
 	real_poll_init(&poll);
 	real_poll_update(&poll, timer_pipe[0], POLLIN, NULL);
@@ -29,29 +39,45 @@ static void *timer_thread(void *dummy)
 		struct timespec timeout;
 		struct real_poll_event event;
 		int res;
+		int cpu = -1, i;
+		uint64_t min_expiration = UINT64_MAX;
 
-		if (active) {
-			timeout.tv_nsec = interval % 1000000000;
-			timeout.tv_sec = interval / 1000000000;
+		for (i = 0; i < NR_CPUS; i++) {
+			if (timers[i].active && timers[i].expires < min_expiration) {
+				min_expiration = timers[i].expires;
+				cpu = i;
+			}
 		}
-		res = real_poll_wait(&poll, &event, 1, active ? &timeout : NULL);
+
+		if (cpu != -1) {
+			uint64_t now = host_unix_nanos();
+			uint64_t delay = timers[cpu].expires - now;
+			if ((int64_t) delay < 0) /* deal with wraparound */
+				delay = 0;
+			timeout.tv_nsec = delay % 1000000000;
+			timeout.tv_sec = delay / 1000000000;
+		}
+		res = real_poll_wait(&poll, &event, 1, cpu != -1 ? &timeout : NULL);
+		/* TODO: res < 0 */
 
 		if (res > 0) {
-			uint64_t next_interval;
-			read(timer_pipe[0], &next_interval, sizeof(next_interval));
-			interval = next_interval;
-			active = 1;
-		}
-		if (res == 0) {
-			trigger_irq(TIMER_IRQ);
-			active = 0;
+			struct timer_msg msg;
+			read(timer_pipe[0], &msg, sizeof(msg));
+			timers[msg.cpu].active = msg.active;
+			timers[msg.cpu].expires = msg.expires;
+		} else if (res == 0) {
+			trigger_irq_on_cpu(TIMER_IRQ, cpu);
+			timers[cpu].active = 0;
 		}
 	}
 }
 
-void timer_set_next_event(uint64_t ns)
+void timer_set_next_event(int cpu, uint64_t ns)
 {
-	write(timer_pipe[1], &ns, sizeof(ns));
+	struct timer_msg msg = { .cpu = cpu,
+				 .active = ns != UINT64_MAX,
+				 .expires = host_unix_nanos() + ns };
+	write(timer_pipe[1], &msg, sizeof(msg));
 }
 
 void timer_start_thread()

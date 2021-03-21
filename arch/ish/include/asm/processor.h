@@ -7,11 +7,20 @@
 #include <emu/emu.h>
 #include <user/setjmp.h>
 
+/* This sucks, but is here so the file can be included from user code. */
+#ifndef __always_inline
+#define __always_inline inline
+#endif
+
 struct task_struct;
 
-static inline void cpu_relax(void)
+static __always_inline void cpu_relax(void)
 {
-	// TODO: asm("pause")
+#if defined(__x86_64__)
+	__asm__ __volatile__("pause" ::: "memory");
+#elif defined(__arm64__)
+	__asm__ __volatile__("yield" ::: "memory");
+#endif
 }
 
 static inline unsigned long get_wchan(struct task_struct *p)
