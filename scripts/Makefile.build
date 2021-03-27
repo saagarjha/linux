@@ -395,7 +395,7 @@ $(subdir-modorder): $(obj)/%/modules.order: $(obj)/% ;
 
 quiet_cmd_ar_builtin = AR      $@
 ifeq ($(CONFIG_HOST_DARWIN),y)
-	cmd_ar_builtin = rm -f $@; scripts/make-response.sh $@ $(real-prereqs)
+	cmd_ar_builtin = rm -f $@; $(srctree)/scripts/make-response.sh $@ $(real-prereqs)
 else
 	cmd_ar_builtin = rm -f $@; $(AR) cDPrST $@ $(real-prereqs)
 endif

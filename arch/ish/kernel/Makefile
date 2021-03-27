@@ -10,7 +10,7 @@ obj-y := cpu.o irq.o mem.o reboot.o setup.o signal.o time.o trap.o process.o \
 
 obj-y += syscalls_user.o irq_user.o time_user.o poll_user.o setup_user.o
 obj-y += setjmp-$(shell uname -m).o # TODO this is disgusting and won't make sense if you want to cross compile
-CFLAGS_irq_user.o += -I$(srctree)/arch/ish/include/generated -I$(srctree)/include # for asm/irqflags.h
+CFLAGS_irq_user.o += -I$(objtree)/arch/ish/include/generated -I$(srctree)/include # for asm/irqflags.h
 
 obj-$(CONFIG_EARLY_PRINTK) += early_printk.o
 obj-$(CONFIG_SMP) += smp.o
