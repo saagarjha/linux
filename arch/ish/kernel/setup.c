@@ -48,7 +48,7 @@ void run_kernel(void)
 	klongjmp(current->thread.kernel_regs, 0);
 }
 
-#ifdef CONFIG_ISH_MAIN
+#ifdef CONFIG_ISH_LINK_EXECUTABLE
 int main(int argc, const char *argv[])
 {
 	int i;

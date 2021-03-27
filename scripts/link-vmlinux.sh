@@ -122,6 +122,9 @@ vmlinux_link()
 			-lutil -lrt -lpthread
 		rm -f linux
 	elif [ "${SRCARCH}" == "ish" ]; then
+		if [ -z "${CONFIG_ISH_LINK_EXECUTABLE}" ]; then
+			CFLAGS_vmlinux="${CFLAGS_vmlinux} -Wl,-r"
+		fi
 		if [ "$(uname)" = "Darwin" ]; then
 			${CC} ${CFLAGS_vmlinux}			\
 				-o ${output}			\
@@ -134,7 +137,6 @@ vmlinux_link()
 				-L../../build -lish_emu		\
 				-lpthread -lm -ldl
 		fi
-		rm -f linux
 	else
 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
 			${strip_debug#-Wl,}			\

@@ -14,9 +14,13 @@ config ISH
 	select ARCH_USE_QUEUED_RWLOCKS
 	select ARCH_USE_QUEUED_SPINLOCKS
 
-config ISH_MAIN
-	bool
-	default y
+choice
+	prompt "Link type"
+config ISH_LINK_EXECUTABLE
+	bool "Link the kernel as an executable and include a simple main() function"
+config ISH_LINK_OBJECT
+	bool "Link the kernel into a single object file"
+endchoice
 
 config ISH_EMULATOR
 	string

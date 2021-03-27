@@ -1,4 +1,4 @@
 PHONY += vdso_headers
 archheaders: vdso_headers
-vdso_headers:
+vdso_headers: $(version_h)
 	$(Q)$(MAKE) $(build)=arch/ish/x86 include/generated/vdso-offsets.h

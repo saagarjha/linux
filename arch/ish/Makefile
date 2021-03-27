@@ -1,3 +1,5 @@
+-include arch/ish/meson_vars.mk
+
 ifndef EMULATOR
 	EMULATOR := ishemu
 endif
@@ -25,15 +27,15 @@ endif
 core-y += arch/ish/$(EMULATOR)/
 KBUILD_CPPFLAGS += -I$(srctree)/arch/ish/include/$(EMULATOR)
 ifeq ($(EMULATOR),ishemu)
-	KBUILD_CPPFLAGS += -I../..
+	KBUILD_CPPFLAGS += $(ISH_CFLAGS)
 endif
 
 include arch/ish/Makefile.abi
 
 export CFLAGS_vmlinux
 ifdef CONFIG_HOST_DARWIN
+	CFLAGS_vmlinux += $(ISH_LDFLAGS)
 	CFLAGS_vmlinux += -lpthread
-	CFLAGS_vmlinux += -L../../build -lish_emu
 	CFLAGS_vmlinux += -sectalign __DATA __percpu_first 1000
 	CFLAGS_vmlinux += -sectalign __DATA __tracepoints 20
 endif
