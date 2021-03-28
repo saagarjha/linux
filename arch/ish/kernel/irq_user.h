@@ -6,5 +6,7 @@ void user_setup_thread(void);
 
 int check_irqs(void);
 void trigger_irq_check(int cpu);
+/* just for the idle loop */
+int enable_and_check_irqs(void);
 
 #endif

@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include <asm/irqflags.h>
 #include <user/fs.h>
 #include <user/irq.h>
 #include <user/poll.h>
@@ -66,8 +65,8 @@ void user_init_IRQ(void)
 void arch_cpu_idle(void)
 {
 	/* This is done this way in order to be atomic.
-	 * - If an IRQ arrives before arch_local_irq_enable, it will be handled
-	 *   by the check_irqs call.
+	 * - If an IRQ arrives before enable_and_check_irqs, it will be handled
+	 *   within this.
 	 * - If an IRQ arrives after that, it will be handled during the call
 	 *   to sigsuspend.
 	 *
@@ -86,8 +85,7 @@ void arch_cpu_idle(void)
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
 	pthread_sigmask(SIG_BLOCK, &set, &old);
-	arch_local_irq_enable();
-	if (!check_irqs())
+	if (!enable_and_check_irqs())
 		sigsuspend(&old);
 	pthread_sigmask(SIG_SETMASK, &old, NULL);
 }

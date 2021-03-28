@@ -111,6 +111,16 @@ int check_irqs(void)
 	return got_irq;
 }
 
+int enable_and_check_irqs(void)
+{
+	int got_irq;
+
+	get_cpu_var(irqs_enabled) = 1;
+	got_irq = check_irqs();
+	put_cpu_var(irqs_enabled);
+	return got_irq;
+}
+
 void __init init_IRQ(void)
 {
 	int i;
