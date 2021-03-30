@@ -46,7 +46,11 @@ static void __user_thread(void)
 	struct pt_regs *regs = current_pt_regs();
 
 	for (;;) {
-		int interrupt = emu_run_to_interrupt(&current->thread.emu, current_pt_regs());
+		int interrupt;
+
+		local_irq_disable();
+		interrupt = emu_run_to_interrupt(&current->thread.emu, current_pt_regs());
+		local_irq_enable();
 		regs->trap_nr = interrupt;
 		regs->orig_ax = regs->ax;
 
