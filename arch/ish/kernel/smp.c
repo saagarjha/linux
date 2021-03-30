@@ -9,7 +9,7 @@
 #include <user/irq.h>
 #include "irq_user.h"
 #include "time_user.h"
-#include "smp_user.h"
+#include "threads_user.h"
 
 void __init smp_prepare_boot_cpu()
 {
@@ -43,7 +43,7 @@ void start_secondary(void *arg)
 	unsigned cpu;
 
 	user_setup_thread();
-	__current = arg;
+	__set_current(arg);
 	cpu = smp_processor_id();
 	local_timer_init();
 

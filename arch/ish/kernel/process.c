@@ -10,6 +10,7 @@
 #include <asm/syscall.h>
 #include <emu/exec.h>
 #include <user/user.h>
+#include "threads_user.h"
 
 #include <asm/unistd.h>
 
@@ -131,7 +132,7 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 {
 	struct task_struct *last;
 
-	__current = to;
+	__set_current(to);
 	last = (void *) ksetjmp(from->thread.kernel_regs);
 	if (last == NULL)
 		klongjmp(to->thread.kernel_regs, (unsigned long) from);

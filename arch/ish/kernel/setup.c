@@ -9,6 +9,7 @@
 #include <user/user.h>
 #include <user/errno.h>
 #include "irq_user.h"
+#include "threads_user.h"
 
 char *empty_zero_page;
 
@@ -35,13 +36,12 @@ void __init setup_arch(char **cmdline_p)
 	
 	for (i = 0; i < nr_cpu_ids; i++)
 		set_cpu_possible(i, true);
-
-	user_setup_thread();
 }
 
 void run_kernel(void)
 {
-	__current = &init_task;
+	setup_current();
+	__set_current(&init_task);
 	KSTK_ESP(current) = (unsigned long)task_stack_page(current) +
 			    THREAD_SIZE - sizeof(void *);
 	KSTK_EIP(current) = (unsigned long)start_kernel;
