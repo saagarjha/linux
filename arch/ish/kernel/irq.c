@@ -42,9 +42,7 @@ static DEFINE_PER_CPU(unsigned long, irq_pending);
 void trigger_irq_on_cpu(int irq, int cpu)
 {
 	/* Set bit with release semantics */
-	/* TODO: This may be broken without CONFIG_SMP, as this still crosses threads. */
-	smp_mb__before_atomic();
-	set_bit(irq, &per_cpu(irq_pending, cpu));
+	__atomic_fetch_or(&per_cpu(irq_pending, cpu), BIT(irq), __ATOMIC_RELEASE);
 	trigger_irq_check(cpu);
 }
 
@@ -80,10 +78,9 @@ int check_irqs(void)
 			static struct pt_regs dummy_irq_regs;
 			struct pt_regs *old_regs;
 
-			/* This needs at least acquire semantics, but no
-			 * barriers are actually needed as the atomic op has
-			 * implicit barriers. */
-			if (!test_and_clear_bit(irq, pending))
+			/* Test and clear the bit with acquire semantics. */
+			unsigned long old_pending = __atomic_fetch_and(pending, ~BIT(irq), __ATOMIC_ACQUIRE);
+			if (!(old_pending & BIT(irq)))
 				continue;
 
 			got_irq = loop_got_irq = 1;
