@@ -138,6 +138,10 @@
 	s_seg	DATA,		_sdata
 	sect	DATA,data
 
+	s_sect	DATA,once, __start_once
+	sect	DATA,once
+	e_sect	DATA,once, __end_once
+
 	s_sect	DATA,trace_bprintk, __start___trace_bprintk_fmt
 	sect	DATA,trace_bprintk
 	e_sect	DATA,trace_bprintk, __stop___trace_bprintk_fmt
