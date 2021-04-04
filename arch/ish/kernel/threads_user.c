@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <user/errno.h>
 #include "threads_user.h"
+#include <asm/current.h>
 
 static int cpu_thread_started[NR_CPUS];
 static pthread_t cpu_threads[NR_CPUS];
@@ -36,7 +37,7 @@ void smp_setup_processor_id(void)
 	cpu_threads[0] = pthread_self();
 }
 
-unsigned long __current_key;
+__pthread_key __current_key;
 static_assert(sizeof(__current_key) == sizeof(pthread_key_t), "");
 
 void setup_current(void)

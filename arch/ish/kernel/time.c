@@ -44,7 +44,7 @@ static int host_timer_next_event(unsigned long ns, struct clock_event_device *ce
 }
 static int host_timer_state_shutdown(struct clock_event_device *ce)
 {
-	timer_set_next_event(smp_processor_id(), UINT64_MAX);
+	timer_set_next_event(smp_processor_id(), U64_MAX);
 	return 0;
 }
 static int host_timer_state_oneshot(struct clock_event_device *ce)
@@ -59,7 +59,7 @@ static DEFINE_PER_CPU(struct clock_event_device, host_clockevents) = {
 	.set_next_event = host_timer_next_event,
 	.set_state_oneshot = host_timer_state_oneshot,
 	.set_state_shutdown = host_timer_state_shutdown,
-	.max_delta_ns = INT64_MAX,
+	.max_delta_ns = S64_MAX,
 	.mult = 1,
 };
 
