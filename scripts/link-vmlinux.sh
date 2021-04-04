@@ -113,7 +113,7 @@ vmlinux_link()
 		strip_debug=-Wl,--strip-debug
 	fi
 
-	if [ "${SRCARCH}" == "um" ]; then
+	if [ "${SRCARCH}" = "um" ]; then
 		${CC} ${CFLAGS_vmlinux}				\
 			${strip_debug}				\
 			-o ${output}				\
@@ -121,7 +121,7 @@ vmlinux_link()
 			$(kbuild_objects -Wl,) ${@}		\
 			-lutil -lrt -lpthread
 		rm -f linux
-	elif [ "${SRCARCH}" == "ish" ]; then
+	elif [ "${SRCARCH}" = "ish" ]; then
 		if [ -z "${CONFIG_ISH_LINK_EXECUTABLE}" ]; then
 			CFLAGS_vmlinux="${CFLAGS_vmlinux} -Wl,-r -nostdlib"
 		fi
