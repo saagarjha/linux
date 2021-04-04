@@ -38,13 +38,14 @@ endif
 include arch/ish/Makefile.abi
 
 export CFLAGS_vmlinux
+export LIBS_vmlinux
 ifdef CONFIG_HOST_DARWIN
 	CFLAGS_vmlinux += $(LIB_ISH_EMU)
 	CFLAGS_vmlinux += -sectalign __DATA __percpu_first 1000
 	CFLAGS_vmlinux += -sectalign __DATA __tracepoints 20
 endif
 ifdef CONFIG_LINK_EXECUTABLE
-	CFLAGS_vmlinux += -lpthread
+	LIBS_vmlinux += -pthread -lm -ldl
 endif
 # TODO: flags on linux host
 vmlinux: $(LIB_ISH_EMU)

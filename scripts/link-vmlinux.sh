@@ -44,12 +44,17 @@ kbuild_objects()
 {
 	flag="$1" # either empty or -Wl,
 	if [ "$(uname)" != "Darwin" ]; then
-		echo "$flag--whole-archive			\
-			${KBUILD_VMLINUX_OBJS}			\
-			$flag--no-whole-archive			\
-			$flag--start-group			\
-			${KBUILD_VMLINUX_LIBS}			\
-			$flag--end-group"
+		if [ "$flag" != "#" ]; then
+			echo "$flag--whole-archive		\
+				${KBUILD_VMLINUX_OBJS}		\
+				$flag--no-whole-archive		\
+				$flag--start-group		\
+				${KBUILD_VMLINUX_LIBS}		\
+				$flag--end-group"
+		else
+			echo "${KBUILD_VMLINUX_OBJS}		\
+				${KBUILD_VMLINUX_LIBS}"
+		fi
 	else
 		# The objs are actually response files
 		for obj in ${KBUILD_VMLINUX_OBJS}; do
@@ -102,6 +107,7 @@ vmlinux_link()
 	local output=${1}
 	local objects
 	local strip_debug
+	local list
 
 	info LD ${output}
 
@@ -123,19 +129,32 @@ vmlinux_link()
 		rm -f linux
 	elif [ "${SRCARCH}" = "ish" ]; then
 		if [ -z "${CONFIG_ISH_LINK_EXECUTABLE}" ]; then
-			CFLAGS_vmlinux="${CFLAGS_vmlinux} -Wl,-r -nostdlib"
-		fi
-		if [ "$(uname)" = "Darwin" ]; then
-			${CC} ${CFLAGS_vmlinux}			\
-				-o ${output}			\
-				$(kbuild_objects -Wl,) ${@}
+
+			if [ "$(uname)" = "Darwin" ]; then
+				libtool -static -o ${output}	\
+					$(kbuild_objects \#) ${@}
+			else
+				${AR} -rcT -o ${output}		\
+					$(kbuild_objects \#) ${@}
+				list=$(${AR} -t ${output})
+				rm ${output}
+				${AR} -rcs -o ${output} ${list}
+			fi
 		else
-			${CC} ${CFLAGS_vmlinux}			\
-				-o ${output}			\
-				-Wl,-T,${lds}			\
-				$(kbuild_objects -Wl,) ${@}	\
-				-L../../build -lish_emu		\
-				-lpthread -lm -ldl
+			if [ "$(uname)" = "Darwin" ]; then
+				${CC} ${CFLAGS_vmlinux}		\
+					-o ${output}		\
+					$(kbuild_objects -Wl,)	\
+					${@}	\
+					${LIBS_vmlinux}
+			else
+				${CC} ${CFLAGS_vmlinux}		\
+					-o ${output}		\
+					-Wl,-T,${lds}		\
+					$(kbuild_objects -Wl,)	\
+					${@}			\
+					${LIBS_vmlinux}
+			fi
 		fi
 	else
 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
