@@ -1,4 +1,9 @@
--include arch/ish/meson_vars.mk
+ifdef ISH_MESON_VARS
+	include $(ISH_MESON_VARS)
+else
+	export ISH_CFLAGS = -I../..
+	export LIB_ISH_EMU = ../build/libish_emu.a
+endif
 
 ifndef EMULATOR
 	EMULATOR := ishemu
@@ -34,13 +39,15 @@ include arch/ish/Makefile.abi
 
 export CFLAGS_vmlinux
 ifdef CONFIG_HOST_DARWIN
-	CFLAGS_vmlinux += $(ISH_LDFLAGS)
-	CFLAGS_vmlinux += -lpthread
+	CFLAGS_vmlinux += $(LIB_ISH_EMU)
 	CFLAGS_vmlinux += -sectalign __DATA __percpu_first 1000
 	CFLAGS_vmlinux += -sectalign __DATA __tracepoints 20
 endif
+ifdef CONFIG_LINK_EXECUTABLE
+	CFLAGS_vmlinux += -lpthread
+endif
 # TODO: flags on linux host
-vmlinux: ../../build/libish_emu.a
+vmlinux: $(LIB_ISH_EMU)
 
 # TODO: $(SUBARCH) doesn't work because it's x86_64
 UTS_MACHINE := i686

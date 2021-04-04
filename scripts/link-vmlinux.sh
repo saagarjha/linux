@@ -123,7 +123,7 @@ vmlinux_link()
 		rm -f linux
 	elif [ "${SRCARCH}" == "ish" ]; then
 		if [ -z "${CONFIG_ISH_LINK_EXECUTABLE}" ]; then
-			CFLAGS_vmlinux="${CFLAGS_vmlinux} -Wl,-r"
+			CFLAGS_vmlinux="${CFLAGS_vmlinux} -Wl,-r -nostdlib"
 		fi
 		if [ "$(uname)" = "Darwin" ]; then
 			${CC} ${CFLAGS_vmlinux}			\
