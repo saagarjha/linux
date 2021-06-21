@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -6,6 +7,7 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
@@ -41,12 +43,22 @@ int errno_map()
 	return err_map(errno);
 }
 
-int host_open(const char *file, int flags)
+int host_openat(int dir, const char *file, int flags, int mode)
 {
-	int fd = open(file, flags);
+	/* You may have noticed that this sucks. */
+	int host_flags = 0;
+	host_flags |= flags & O_ACCMODE;
+	if (flags & 00000100) host_flags |= O_CREAT;
+	if (flags & 00000200) host_flags |= O_EXCL;
+	if (flags & 00200000) host_flags |= O_DIRECTORY;
+	int fd = openat(dir, file, host_flags, mode);
 	if (fd < 0)
 		return errno_map();
 	return fd;
+}
+int host_open(const char *file, int flags)
+{
+	return host_openat(AT_FDCWD, file, flags, 0);
 }
 
 int host_pipe(int *r, int *w) {
@@ -98,9 +110,104 @@ int host_fstat_size(int fd, ssize_t *size)
 	return 0;
 }
 
+int host_ftruncate(int fd, off_t length) {
+	int err = ftruncate(fd, length);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_futimens(int fd, const struct host_timespec in_times[2]) {
+	struct timespec times[2] = {
+		{.tv_sec = in_times[0].tv_sec, .tv_nsec = in_times[0].tv_nsec},
+		{.tv_sec = in_times[1].tv_sec, .tv_nsec = in_times[1].tv_nsec},
+	};
+	int err = futimens(fd, times);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_dup_opendir(int fd, void **dir_out) {
+	fd = dup(fd);
+	if (fd < 0)
+		return errno_map();
+	*dir_out = fdopendir(fd);
+	if (*dir_out == NULL)
+		return errno_map();
+	return 0;
+}
+
+int host_readdir(void *dir, struct host_dirent *out) {
+	errno = 0;
+	struct dirent *ent = readdir(dir);
+	if (ent == NULL)
+		return errno_map();
+	out->ino = ent->d_ino;
+	out->name = ent->d_name;
+	out->name_len = ent->d_namlen;
+	out->type = ent->d_type;
+	return 1;
+}
+
+long host_telldir(void *dir) {
+	long tell = telldir(dir);
+	return tell;
+}
+
+int host_seekdir(void *dir, long off) {
+	seekdir(dir, off);
+	return 0;
+}
+
+int host_rewinddir(void *dir) {
+	rewinddir(dir);
+	return 0;
+}
+
+int host_closedir(void *dir) {
+	int err = closedir(dir);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
 int host_close(int fd)
 {
 	int err = close(fd);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
+int host_renameat(int from_fd, const char *from, int to_fd, const char *to)
+{
+	int err = renameat(from_fd, from, to_fd, to);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+int host_linkat(int from_fd, const char *from, int to_fd, const char *to)
+{
+	int err = linkat(from_fd, from, to_fd, to, 0);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+int host_unlinkat(int dir_fd, const char *path) {
+	int err = unlinkat(dir_fd, path, 0);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+int host_mkdirat(int dir_fd, const char *path, int mode) {
+	int err = mkdirat(dir_fd, path, mode);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+int host_rmdirat(int dir_fd, const char *path) {
+	int err = unlinkat(dir_fd, path, AT_REMOVEDIR);
 	if (err < 0)
 		return errno_map();
 	return 0;

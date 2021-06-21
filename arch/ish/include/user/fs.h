@@ -9,10 +9,38 @@ ssize_t host_read(int fd, void *data, size_t len);
 ssize_t host_pwrite(int fd, void *data, size_t len, off_t offset);
 ssize_t host_pread(int fd, void *data, size_t len, off_t offset);
 int host_fstat_size(int fd, ssize_t *size);
+int host_ftruncate(int fd, off_t length);
 int fd_set_nonblock(int fd);
+
+struct host_timespec {
+	uint64_t tv_sec;
+	long tv_nsec;
+};
+int host_futimens(int fd, const struct host_timespec times[2]);
+
 int host_open(const char *path, int flags);
+int host_openat(int dir, const char *path, int flags, int mode);
 int host_pipe(int *r, int *w);
 int host_close(int fd);
+
+int host_dup_opendir(int fd, void **dir_out);
+struct host_dirent {
+	uint64_t ino;
+	uint8_t type;
+	char *name;
+	size_t name_len;
+};
+int host_readdir(void *dir, struct host_dirent *out);
+long host_telldir(void *dir);
+int host_seekdir(void *dir, long off);
+int host_rewinddir(void *dir);
+int host_closedir(void *dir);
+
+int host_renameat(int from_fd, const char *from, int to_fd, const char *to);
+int host_linkat(int from_fd, const char *from, int to_fd, const char *to);
+int host_unlinkat(int dir_fd, const char *path);
+int host_mkdirat(int dir_fd, const char *path, int mode);
+int host_rmdirat(int dir_fd, const char *path);
 
 struct user_iovec {
 	void *base;

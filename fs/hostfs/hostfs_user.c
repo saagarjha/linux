@@ -27,6 +27,13 @@
 
 /* TODO ish errno */
 
+#ifdef __APPLE__
+#define st_ts(x) st_##x##timespec
+#endif
+#ifdef __linux__
+#define st_ts(x) st_##x##tim
+#endif
+
 static void stat_to_hostfs(const struct stat *buf, struct hostfs_stat *p)
 {
 	p->ino = buf->st_ino;
@@ -35,12 +42,12 @@ static void stat_to_hostfs(const struct stat *buf, struct hostfs_stat *p)
 	p->uid = buf->st_uid;
 	p->gid = buf->st_gid;
 	p->size = buf->st_size;
-	p->atime.tv_sec = buf->st_atime;
-	p->atime.tv_nsec = 0;
-	p->ctime.tv_sec = buf->st_ctime;
-	p->ctime.tv_nsec = 0;
-	p->mtime.tv_sec = buf->st_mtime;
-	p->mtime.tv_nsec = 0;
+	p->atime.tv_sec = buf->st_ts(a).tv_sec;
+	p->atime.tv_nsec = buf->st_ts(a).tv_nsec;
+	p->ctime.tv_sec = buf->st_ts(c).tv_sec;
+	p->ctime.tv_nsec = buf->st_ts(c).tv_nsec;
+	p->mtime.tv_sec = buf->st_ts(m).tv_sec;
+	p->mtime.tv_nsec = buf->st_ts(m).tv_nsec;
 	p->blksize = buf->st_blksize;
 	p->blocks = buf->st_blocks;
 	p->maj = major(buf->st_rdev);
