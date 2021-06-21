@@ -144,6 +144,4 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 	return last;
 }
 
-__thread struct task_struct *__current;
-
 unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
