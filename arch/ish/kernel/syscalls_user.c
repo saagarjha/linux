@@ -145,7 +145,6 @@ int host_readdir(void *dir, struct host_dirent *out) {
 		return errno_map();
 	out->ino = ent->d_ino;
 	out->name = ent->d_name;
-	out->name_len = ent->d_namlen;
 	out->type = ent->d_type;
 	return 1;
 }

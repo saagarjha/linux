@@ -28,7 +28,6 @@ struct host_dirent {
 	uint64_t ino;
 	uint8_t type;
 	char *name;
-	size_t name_len;
 };
 int host_readdir(void *dir, struct host_dirent *out);
 long host_telldir(void *dir);
