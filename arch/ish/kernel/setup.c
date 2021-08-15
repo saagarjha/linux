@@ -38,14 +38,15 @@ void __init setup_arch(char **cmdline_p)
 		set_cpu_possible(i, true);
 }
 
+static void start_main(void *arg) {
+	__set_current(arg);
+	start_kernel();
+}
+
 void run_kernel(void)
 {
 	setup_current();
-	__set_current(&init_task);
-	KSTK_ESP(current) = (unsigned long)task_stack_page(current) +
-			    THREAD_SIZE - sizeof(void *);
-	KSTK_EIP(current) = (unsigned long)start_kernel;
-	klongjmp(current->thread.kernel_regs, 0);
+	start_cpu_thread(0, (void *) start_main, &init_task, task_stack_page(&init_task), THREAD_SIZE);
 }
 
 #ifdef CONFIG_ISH_LINK_EXECUTABLE
@@ -58,6 +59,7 @@ int main(int argc, const char *argv[])
 		strcat(boot_command_line, argv[i]);
 	}
 	run_kernel();
+	for (;;) host_pause();
 	return 0;
 }
 #endif

@@ -31,7 +31,7 @@ int __initdata rd_doload;	/* 1 = load RAM disk, 0 = don't load */
 
 int root_mountflags = MS_RDONLY | MS_SILENT;
 static char * __initdata root_device_name;
-static char __initdata saved_root_name[64];
+static char __initdata saved_root_name[256];
 static int root_wait;
 
 dev_t ROOT_DEV;
@@ -657,6 +657,10 @@ void __init prepare_namespace(void)
 			goto out;
 		}
 		ROOT_DEV = name_to_dev_t(root_device_name);
+		if (ROOT_DEV == 0) {
+			mount_block_root(root_device_name, root_mountflags);
+			goto out;
+		}
 		if (strncmp(root_device_name, "/dev/", 5) == 0)
 			root_device_name += 5;
 	}
