@@ -94,3 +94,7 @@ config GOLP
 	bool "Golp interface"
 	default y
 	depends on INET
+
+config STDIO_CONSOLE
+	bool "Console on stdin/stdout"
+	default y
