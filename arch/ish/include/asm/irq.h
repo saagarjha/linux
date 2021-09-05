@@ -7,6 +7,7 @@
 #define GOLP_IRQ 3
 #define IPI_CALL_FUNC 8
 #define IPI_RESCHEDULE 9
+#define CALL_BLOCK_IRQ 10
 #define NR_IRQS 16
 
 #endif
