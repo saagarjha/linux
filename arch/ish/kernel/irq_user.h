@@ -9,4 +9,6 @@ void trigger_irq_check(int cpu);
 /* just for the idle loop */
 int enable_and_check_irqs(void);
 
+int get_smp_processor_id(void);
+
 #endif

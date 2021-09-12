@@ -77,14 +77,7 @@ int check_irqs(void)
 		for (irq = 0; irq < NR_IRQS; irq++) {
 			static struct pt_regs dummy_irq_regs;
 			struct pt_regs *old_regs;
-
-			/* Test and clear the bit with acquire semantics. */
-			unsigned long old_pending = __atomic_fetch_and(pending, ~BIT(irq), __ATOMIC_ACQUIRE);
-			if (!(old_pending & BIT(irq)))
-				continue;
-
-			got_irq = loop_got_irq = 1;
-			old_regs = set_irq_regs(&dummy_irq_regs);
+			unsigned long old_pending;
 
 			/* Only compiler barriers are needed here, as this only
 			 * needs to synchronize with a signal handler. */
@@ -92,11 +85,20 @@ int check_irqs(void)
 			barrier();
 			trace_hardirqs_off();
 
+			/* Test and clear the bit with acquire semantics. */
+			old_pending = __atomic_fetch_and(pending, ~BIT(irq), __ATOMIC_ACQUIRE);
+			if (!(old_pending & BIT(irq)))
+				goto never_mind;
+
+			got_irq = loop_got_irq = 1;
+			old_regs = set_irq_regs(&dummy_irq_regs);
+
 			irq_enter();
 			generic_handle_irq(irq);
 			irq_exit();
 			set_irq_regs(old_regs);
 
+never_mind:
 			trace_hardirqs_on();
 			barrier();
 			*enabled_irqs = 1;
@@ -124,4 +126,9 @@ void __init init_IRQ(void)
 	for (i = 0; i < NR_IRQS; i++)
 		irq_set_chip_and_handler(i, &dummy_irq_chip, handle_simple_irq);
 	user_init_IRQ();
+}
+
+int get_smp_processor_id(void)
+{
+	return smp_processor_id();
 }
