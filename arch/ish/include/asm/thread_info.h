@@ -4,7 +4,7 @@
 #include <asm/types.h>
 #include <asm/processor.h>
 
-#define THREAD_SIZE_ORDER (1)
+#define THREAD_SIZE_ORDER (3)
 #define THREAD_SIZE (PAGE_SIZE << (THREAD_SIZE_ORDER))
 
 #ifndef __ASSEMBLY__
