@@ -24,7 +24,7 @@ void walk_stack(struct task_struct *task, frame_cb_t cb, void *data)
 		frame = __builtin_frame_address(0);
 		pc = 0;
 	} else {
-		frame = (void *)task->thread.kernel_regs->rbp;
+		frame = (void *)task->thread.kernel_regs->jb_fp;
 		pc = (void *)KSTK_EIP(task);
 	}
 

@@ -123,6 +123,10 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
 		task_pt_regs(p)->sp = usp;
 	}
 	KSTK_ESP(p) = (unsigned long) task_stack_page(p) + THREAD_SIZE - sizeof(void *);
+	// AAPCS requires that that stack is quadword aligned.
+#ifdef __arm64__
+	KSTK_ESP(p) &= ~0xf;
+#endif
 	KSTK_EIP(p) = (unsigned long) __kernel_thread;
 	p->thread.request.func = NULL;
 	if (unlikely(p->flags & PF_KTHREAD)) {
@@ -136,6 +140,7 @@ void *__switch_to(struct task_struct *from, struct task_struct *to)
 {
 	struct task_struct *last;
 
+	BUG_ON(!from);
 	__set_current(to);
 	last = (void *) ksetjmp(from->thread.kernel_regs);
 	if (last == NULL)

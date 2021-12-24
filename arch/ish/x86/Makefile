@@ -7,6 +7,9 @@ VDSOCC = clang
 ifneq (,$(wildcard /usr/local/opt/llvm/bin/clang))
 	VDSOCC = /usr/local/opt/llvm/bin/clang
 endif
+ifneq (,$(wildcard /opt/local/bin/clang))
+	VDSOCC = /opt/local/bin/clang
+endif
 VDSO_CFLAGS += --target=i686-pc-linux-gnu
 
 targets += vdso.lds $(vobjs-y)
