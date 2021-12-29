@@ -9,7 +9,7 @@ obj-y := cpu.o irq.o mem.o reboot.o setup.o signal.o time.o trap.o process.o \
 	ptrace.o uaccess.o syscalls.o tls.o stacktrace.o
 
 obj-y += syscalls_user.o irq_user.o time_user.o poll_user.o threads_user.o
-obj-y += setjmp-$(shell uname -m).o # TODO this is disgusting and won't make sense if you want to cross compile
+obj-y += setjmp.o
 
 obj-$(CONFIG_EARLY_PRINTK) += early_printk.o
 obj-$(CONFIG_SMP) += smp.o
