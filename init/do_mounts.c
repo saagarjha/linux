@@ -625,12 +625,17 @@ void __init mount_root(void)
 #endif
 }
 
+bool rootfs_mounted = false;
+
 /*
  * Prepare the namespace - decide what/where to mount, load ramdisks, etc.
  */
 void __init prepare_namespace(void)
 {
 	int is_floppy;
+
+	if (rootfs_mounted)
+		return;
 
 	if (root_delay) {
 		printk(KERN_INFO "Waiting %d sec before mounting root device...\n",
@@ -688,6 +693,7 @@ out:
 	devtmpfs_mount();
 	do_mount(".", "/", NULL, MS_MOVE, NULL);
 	ksys_chroot(".");
+	rootfs_mounted = true;
 }
 
 static bool is_tmpfs;
