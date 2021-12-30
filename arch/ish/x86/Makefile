@@ -16,7 +16,7 @@ targets += vdso.lds $(vobjs-y)
 vobjs := $(foreach F,$(vobjs-y),$(obj)/$F)
 $(vobjs): KBUILD_CFLAGS = $(VDSO_CFLAGS)
 $(vobjs): KBUILD_AFLAGS = $(VDSO_CFLAGS)
-$(vobjs): CC = $(VDSOCC)
+$(vobjs): override CC = $(VDSOCC)
 
 quiet_cmd_vdsold = VDSOLD  $@
       cmd_vdsold = $(VDSOCC) $(VDSO_CFLAGS) -fuse-ld=lld -nostdlib \
