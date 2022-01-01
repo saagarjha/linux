@@ -43,11 +43,17 @@ static void start_main(void *arg) {
 	start_kernel();
 }
 
+extern void wait_for_startup(void);
+extern int notify_startup(void);
+
 void run_kernel(void)
 {
 	setup_current();
 	start_cpu_thread(0, (void *) start_main, &init_task, task_stack_page(&init_task), THREAD_SIZE);
+	wait_for_startup();
 }
+
+late_initcall(notify_startup);
 
 #ifdef CONFIG_ISH_LINK_EXECUTABLE
 int main(int argc, const char *argv[])
