@@ -31,6 +31,11 @@ config ARCH_KALLSYMS
 	bool "Use dladdr for kallsyms"
 	default y
 
+config ARCH_RANDOM
+	def_bool y
+config RANDOM_TRUST_CPU
+	def_bool y
+
 config LOCKDEP_SUPPORT
 	def_bool y
 config STACKTRACE_SUPPORT
