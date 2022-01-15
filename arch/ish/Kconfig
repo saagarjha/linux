@@ -100,6 +100,11 @@ config GOLP
 	default y
 	depends on INET
 
+config GOLP_AUTOCONFIG
+	bool "Autoconfigure golp on startup"
+	default y
+	depends on !IP_PNP
+
 config STDIO_CONSOLE
 	bool "Console on stdin/stdout"
 	default y
