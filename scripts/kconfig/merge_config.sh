@@ -145,16 +145,20 @@ for ORIG_MERGE_FILE in $MERGE_LIST ; do
 			echo Value of $CFG is redundant by fragment $ORIG_MERGE_FILE:
 		fi
 		if [ "$BUILTIN_FLAG" = "false" ]; then
-			sed -i "/$CFG[ =]/d" $TMP_FILE
+			sed -i -e "/$CFG[ =]/d" $TMP_FILE
 		else
-			sed -i "/$CFG[ =]/d" $MERGE_FILE
+			sed -i -e "/$CFG[ =]/d" $MERGE_FILE
 		fi
 	done
 	cat $MERGE_FILE >> $TMP_FILE
 done
 
 if [ "$RUNMAKE" = "false" ]; then
-	cp -T -- "$TMP_FILE" "$KCONFIG_CONFIG"
+	if [ -d "$KCONFIG_CONFIG" ]; then
+		echo "cannot write to $KCONFIG_CONFIG: is a directory" 2>&1
+		exit 1
+	fi
+	cp -- "$TMP_FILE" "$KCONFIG_CONFIG"
 	echo "#"
 	echo "# merged configuration written to $KCONFIG_CONFIG (needs make)"
 	echo "#"
