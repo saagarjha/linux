@@ -1,3 +1,4 @@
+#include <linux/inetdevice.h>
 #include <linux/in.h>
 #include <net/ip.h>
 #include <user/fs.h>
@@ -41,34 +42,6 @@ static int open_udp_socket(__be32 address, unsigned short port)
 	if (err < 0)
 		return err;
 	return sock;
-}
-
-static int get_local_addr_for_route(__be32 remote, __be32 *local)
-{
-	static DEFINE_PER_CPU(int, sock_var) = -1;
-	int *sock_ptr;
-	int sock;
-	struct sockaddr_in sin = {.sin_family = AF_INET, .sin_port = 1};
-	int err;
-
-	sock_ptr = &get_cpu_var(sock_var);
-	if (*sock_ptr < 0) {
-		*sock_ptr = host_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if (*sock_ptr < 0)
-			panic("couldn't create routing test socket: %pe", ERR_PTR(*sock_ptr));
-	}
-	sock = *sock_ptr;
-	put_cpu_var(sock_var);
-
-	sin.sin_addr.s_addr = remote;
-	err = host_connect(sock, &sin, sizeof(sin));
-	if (err < 0)
-		return err;
-	err = host_getname(sock, &sin, sizeof(sin), GETNAME_SOCK);
-	if (err < 0)
-		return err;
-	*local = sin.sin_addr.s_addr;
-	return 0;
 }
 
 int golp_udp4_ip_listen(struct net_device *dev, __be32 address, unsigned short port)
@@ -213,9 +186,7 @@ void golp_udp4_rx(struct golp_socket *sock, struct net_device *dev)
 		ip->saddr = sin->sin_addr.s_addr;
 		ip->daddr = sock->addr;
 		if (ip->daddr == INADDR_ANY) {
-			int err = get_local_addr_for_route(ip->saddr, &ip->daddr);
-			if (err < 0)
-				panic("failed to route %pI4: %pe", &ip->saddr, ERR_PTR(err));
+			ip->daddr = inet_select_addr(dev, ip->saddr, RT_SCOPE_HOST);
 		}
 		memcpy(skb_put(skb, rcv_len), __golp_irq_buf, rcv_len);
 		golp_rx(skb);
