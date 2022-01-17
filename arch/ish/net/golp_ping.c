@@ -1,4 +1,5 @@
 #include <net/icmp.h>
+#include <linux/inetdevice.h>
 #include <user/fs.h>
 #include "golp.h"
 
@@ -58,6 +59,7 @@ void golp_ping4_rx(struct golp_socket *sock, struct net_device *dev)
 		int addr_len;
 		int rcv_flags;
 		ssize_t rcv_len;
+		struct iphdr *ip;
 
 		rcv_len = host_recvmsg(sock->fd, &iov, 1, &addr, &addr_len, &rcv_flags, MSG_DONTWAIT);
 		if (rcv_len == -EAGAIN)
@@ -73,6 +75,11 @@ void golp_ping4_rx(struct golp_socket *sock, struct net_device *dev)
 			continue;
 		}
 		memcpy(skb_put(skb, rcv_len), __golp_irq_buf, rcv_len);
+
+		skb_reset_network_header(skb);
+		ip = ip_hdr(skb);
+		ip->daddr = inet_select_addr(dev, ip->saddr, RT_SCOPE_HOST);
+
 		golp_rx(skb);
 	}
 }
