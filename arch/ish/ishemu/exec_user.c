@@ -67,7 +67,8 @@ void emu_flush_tlb_local(struct emu_mm *mm, unsigned long start, unsigned long e
 	if (the_tlb.mmu == NULL)
 		return;
 	tlb_flush(&the_tlb);
-	jit_invalidate_range(mm->mmu.jit, start / PAGE_SIZE, (end + PAGE_SIZE - 1) / PAGE_SIZE /* TODO DIV_ROUND_UP? */);
+	if (mm->mmu.jit != NULL)
+		jit_invalidate_range(mm->mmu.jit, start / PAGE_SIZE, (end + PAGE_SIZE - 1) / PAGE_SIZE /* TODO DIV_ROUND_UP? */);
 }
 
 void emu_mmu_init(struct emu *emu, struct emu_mm *mm)
@@ -76,9 +77,17 @@ void emu_mmu_init(struct emu *emu, struct emu_mm *mm)
 	mm->mmu.ops = &ishemu_ops;
 }
 
+void emu_mmu_destroy(struct emu *emu, struct emu_mm *mm)
+{
+	jit_free(mm->mmu.jit);
+	mm->mmu.jit = NULL;
+}
+
 void emu_switch_mm(struct emu *emu, struct emu_mm *mm) {
 	if (!mm)
 		return;
+	if (mm->mmu.jit == NULL)
+		emu_mmu_init(emu, mm);
 	emu->cpu.mmu = &mm->mmu;
 	tlb_refresh(&the_tlb, &mm->mmu);
 }

@@ -25,7 +25,8 @@ static inline void destroy_context(struct mm_struct *mm)
 static inline void deactivate_mm(struct task_struct *task,
 			struct mm_struct *mm)
 {
-	/* TODO! free jit */
+	if (mm != NULL)
+		emu_mmu_destroy(&task->thread.emu, &mm->context.emu_mm);
 }
 
 static inline void switch_mm(struct mm_struct *prev,
