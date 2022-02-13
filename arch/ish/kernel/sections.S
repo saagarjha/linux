@@ -115,6 +115,15 @@
 	sect	DATA,const
 	sect	DATA,const_init
 
+	# SCHED_DATA
+	s_sect	DATA,idle_sch_cls, __begin_sched_classes
+	sect	DATA,idle_sch_cls
+	sect	DATA,fair_sch_cls
+	sect	DATA,rt_sch_cls
+	sect	DATA,dl_sch_cls
+	sect	DATA,stop_sch_cls
+	e_sect	DATA,stop_sch_cls, __end_sched_classes
+
 	s_sect	DATA,tracepts_ptrs, __start___tracepoints_ptrs
 	sect	DATA,tracepts_ptrs
 	e_sect	DATA,tracepts_ptrs, __stop___tracepoints_ptrs

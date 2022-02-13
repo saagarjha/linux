@@ -109,7 +109,7 @@ static void __kernel_thread(struct task_struct *last)
 /* TODO put this in a header */
 int do_set_thread_area(struct task_struct *task, struct user_desc __user *u_info);
 
-int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
+int copy_thread(unsigned long clone_flags, unsigned long usp,
 		unsigned long arg, struct task_struct *p, unsigned long tls)
 {
 	*task_pt_regs(p) = *current_pt_regs();

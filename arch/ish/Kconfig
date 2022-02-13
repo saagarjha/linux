@@ -13,6 +13,7 @@ config ISH
 	select GENERIC_SMP_IDLE_THREAD
 	select ARCH_USE_QUEUED_RWLOCKS
 	select ARCH_USE_QUEUED_SPINLOCKS
+	select SET_FS
 
 choice
 	prompt "Link type"

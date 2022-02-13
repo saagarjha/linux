@@ -35,7 +35,7 @@ ifeq ($(EMULATOR),ishemu)
 	KBUILD_CPPFLAGS += $(ISH_CFLAGS)
 endif
 
-include arch/ish/Makefile.abi
+include $(srctree)/arch/ish/Makefile.abi
 
 export CFLAGS_vmlinux
 export LIBS_vmlinux

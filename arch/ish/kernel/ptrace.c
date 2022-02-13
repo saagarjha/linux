@@ -169,28 +169,15 @@ static const struct user_regset_view user_x86_32_view; /* Initialized below. */
 
 static int genregs32_get(struct task_struct *target,
 			 const struct user_regset *regset,
-			 unsigned int pos, unsigned int count,
-			 void *kbuf, void __user *ubuf)
+			 struct membuf to)
 {
-	if (kbuf) {
-		compat_ulong_t *k = kbuf;
-		while (count >= sizeof(*k)) {
-			getreg32(target, pos, k++);
-			count -= sizeof(*k);
-			pos += sizeof(*k);
-		}
-	} else {
-		compat_ulong_t __user *u = ubuf;
-		while (count >= sizeof(*u)) {
-			compat_ulong_t word;
-			getreg32(target, pos, &word);
-			if (__put_user(word, u++))
-				return -EFAULT;
-			count -= sizeof(*u);
-			pos += sizeof(*u);
-		}
-	}
+	int reg;
 
+	for (reg = 0; to.left; reg++) {
+		u32 val;
+		getreg32(target, reg * sizeof(val), &val);
+		membuf_store(&to, val);
+	}
 	return 0;
 }
 
@@ -258,7 +245,7 @@ static struct user_regset x86_32_regsets[] __ro_after_init = {
 		.core_note_type = NT_PRSTATUS,
 		.n = sizeof(struct user_regs_struct32) / sizeof(u32),
 		.size = sizeof(u32), .align = sizeof(u32),
-		.get = genregs32_get, .set = genregs32_set
+		.regset_get = genregs32_get, .set = genregs32_set
 	},
 };
 

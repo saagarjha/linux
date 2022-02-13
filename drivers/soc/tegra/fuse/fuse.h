@@ -34,6 +34,8 @@ struct tegra_fuse_soc {
 	unsigned int num_lookups;
 
 	const struct attribute_group *soc_attr_group;
+
+	bool clk_suspend_on;
 };
 
 struct tegra_fuse {
@@ -63,7 +65,7 @@ struct tegra_fuse {
 void tegra_init_revision(void);
 void tegra_init_apbmisc(void);
 
-bool __init tegra_fuse_read_spare(unsigned int spare);
+u32 __init tegra_fuse_read_spare(unsigned int spare);
 u32 __init tegra_fuse_read_early(unsigned int offset);
 
 u8 tegra_get_major_rev(void);
@@ -115,9 +117,17 @@ extern const struct tegra_fuse_soc tegra210_fuse_soc;
 extern const struct tegra_fuse_soc tegra186_fuse_soc;
 #endif
 
+#if IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC) || \
+    IS_ENABLED(CONFIG_ARCH_TEGRA_234_SOC)
+extern const struct attribute_group tegra194_soc_attr_group;
+#endif
+
 #ifdef CONFIG_ARCH_TEGRA_194_SOC
 extern const struct tegra_fuse_soc tegra194_fuse_soc;
-extern const struct attribute_group tegra194_soc_attr_group;
+#endif
+
+#ifdef CONFIG_ARCH_TEGRA_234_SOC
+extern const struct tegra_fuse_soc tegra234_fuse_soc;
 #endif
 
 #endif

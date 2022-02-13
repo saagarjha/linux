@@ -37,7 +37,7 @@ good_area:
 			goto bad_area;
 	}
 
-	fault = handle_mm_fault(vma, address, flags);
+	fault = handle_mm_fault(vma, address, flags, NULL);
 
 	/* TODO: this choice of pt_regs may not make any sense */
 	if (fault_signal_pending(fault, task_pt_regs(current)))

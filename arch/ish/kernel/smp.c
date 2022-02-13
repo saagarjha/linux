@@ -63,7 +63,7 @@ void start_secondary(void *arg)
 int __cpu_up(unsigned int cpu, struct task_struct *idle)
 {
 	int err;
-	idle->cpu = cpu;
+	task_thread_info(idle)->cpu = cpu;
 	err = start_cpu_thread(cpu, start_secondary, idle, task_stack_page(idle), THREAD_SIZE);
 	if (err != 0) {
 		printk("failed to start thread for cpu %d: %pe", cpu, ERR_PTR(err));

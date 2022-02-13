@@ -23,7 +23,7 @@ static __always_inline void cpu_relax(void)
 #endif
 }
 
-static inline unsigned long get_wchan(struct task_struct *p)
+static inline unsigned long __get_wchan(struct task_struct *p)
 {
 	// TODO
 	return 0;

@@ -9,7 +9,6 @@ pgd_t swapper_pg_dir[PTRS_PER_PGD];
 void __init mem_init(void)
 {
 	memblock_free_all();
-	mem_init_print_info(NULL);
 }
 
 void free_initmem(void)

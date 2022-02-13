@@ -782,7 +782,7 @@
 		};
 
 		qspi: spi@ff705000 {
-			compatible = "cdns,qspi-nor";
+			compatible = "intel,socfpga-qspi", "cdns,qspi-nor";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0xff705000 0x1000>,
@@ -829,6 +829,7 @@
 			num-cs = <4>;
 			clocks = <&spi_m_clk>;
 			resets = <&rst SPIM0_RESET>;
+			reset-names = "spi";
 			status = "disabled";
 		};
 
@@ -841,6 +842,7 @@
 			num-cs = <4>;
 			clocks = <&spi_m_clk>;
 			resets = <&rst SPIM1_RESET>;
+			reset-names = "spi";
 			status = "disabled";
 		};
 

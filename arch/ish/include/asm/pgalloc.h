@@ -24,21 +24,5 @@ do {							\
 #define pmd_pgtable(pmd) pmd_page(pmd)
 
 extern pgd_t *pgd_alloc(struct mm_struct *);
-static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
-{
-	pmd_t *pmd = (pmd_t *) __get_free_page(GFP_KERNEL | __GFP_ZERO);
-	if (pmd)
-		memset(pmd, 0, PAGE_SIZE);
-	return pmd;
-}
-
-static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
-{
-	free_page((unsigned long) pgd);
-}
-static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
-{
-	free_page((unsigned long) pmd);
-}
 
 #endif

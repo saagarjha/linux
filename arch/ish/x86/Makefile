@@ -22,10 +22,10 @@ quiet_cmd_vdsold = VDSOLD  $@
       cmd_vdsold = $(VDSOCC) $(VDSO_CFLAGS) -fuse-ld=lld -nostdlib \
 		   -shared -Wl,-T,$(filter %.lds,$^) $(filter %.o,$^) -o $@
 
-$(obj)/libvdso.so: $(vobjs) $(obj)/vdso.lds
+$(obj)/libvdso.so: $(vobjs) $(obj)/vdso.lds FORCE
 	$(call if_changed,vdsold)
 
 quiet_cmd_vdso_sym = VDSOSYM $@
       cmd_vdso_sym = $(NM) $< | awk '/ T __kernel/ {printf(".%s = 0x%s,\n", $$3, $$1)}' > $@
-include/generated/vdso-offsets.h: $(obj)/libvdso.so
+include/generated/vdso-offsets.h: $(obj)/libvdso.so FORCE
 	$(call if_changed,vdso_sym)

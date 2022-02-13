@@ -4,7 +4,7 @@
 /* for x86 */
 #include <asm/unistd_32.h>
 
-#define NR_syscalls (__NR_syscall_max + 1)
+#define NR_syscalls __NR_syscalls
 
 /* ugh */
 # define __ARCH_WANT_NEW_STAT

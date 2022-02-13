@@ -1,6 +1,6 @@
 #include <linux/sched/signal.h>
 #include <asm/pgtable.h>
-#include <stdarg.h>
+#include <linux/stdarg.h>
 
 #include "emu/interrupt.h"
 #include "emu/cpu.h"

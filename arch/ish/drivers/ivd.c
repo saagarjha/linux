@@ -16,9 +16,9 @@ static struct ivd ivd0;
 static char ivd_file[1024];
 module_param_string(file0, ivd_file, sizeof(ivd_file), 0444);
 
-static blk_qc_t ivd_make_request(struct request_queue *q, struct bio *bio)
+static void ivd_submit_bio(struct bio *bio)
 {
-	struct ivd *ivd = bio->bi_disk->private_data;
+	struct ivd *ivd = bio->bi_bdev->bd_disk->private_data;
 	struct bio_vec bvec;
 	struct bvec_iter iter;
 	size_t offset = bio->bi_iter.bi_sector << SECTOR_SHIFT;
@@ -42,10 +42,10 @@ static blk_qc_t ivd_make_request(struct request_queue *q, struct bio *bio)
 		offset += size;
 	}
 	bio_endio(bio);
-	return BLK_QC_T_NONE;
 }
 
 static struct block_device_operations ivd_fops = {
+	.submit_bio = ivd_submit_bio,
 };
 
 static int ivd_major;
@@ -64,15 +64,12 @@ static int __init ivd_init(void)
 		printk("ivd: %s\n", ivd_file);
 		ivd = &ivd0;
 		ivd->fd = host_open(ivd_file, O_RDWR);
-		ivd->queue = blk_alloc_queue(ivd_make_request, NUMA_NO_NODE);
-		if (!ivd->queue)
-			return -ENOMEM;
-		ivd->disk = alloc_disk(1);
+		ivd->disk = blk_alloc_disk(NUMA_NO_NODE);
 		if (!ivd->disk)
 			return -ENOMEM;
 		ivd->disk->major = ivd_major;
 		ivd->disk->first_minor = 0; // there is only one, for now, I guess?
-		ivd->disk->queue = ivd->queue;
+		ivd->disk->minors = 1;
 		ivd->disk->fops = &ivd_fops;
 		strcpy(ivd->disk->disk_name, "ivd0");
 		ivd->disk->private_data = &ivd0;
@@ -82,7 +79,11 @@ static int __init ivd_init(void)
 			return err;
 		}
 		set_capacity(ivd->disk, ivd_size / SECTOR_SIZE);
-		add_disk(ivd->disk);
+		err = add_disk(ivd->disk);
+		if (err) {
+			blk_cleanup_disk(ivd->disk);
+			return err;
+		}
 	}
 	
 	return 0;

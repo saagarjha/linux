@@ -61,7 +61,7 @@
 	PER_CPU_ATTRIBUTES
 
 #define __PCPU_DUMMY_ATTRS						\
-	__attribute__((section(".discard"), unused))
+	__section(".discard") __attribute__((unused))
 
 #elif defined(__MACH__)
 
@@ -431,7 +431,7 @@ do {									\
  * instead.
  *
  * If there is no other protection through preempt disable and/or disabling
- * interupts then one of these RMW operations can show unexpected behavior
+ * interrupts then one of these RMW operations can show unexpected behavior
  * because the execution thread was rescheduled on another processor or an
  * interrupt occurred and the same percpu variable was modified from the
  * interrupt context.

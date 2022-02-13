@@ -48,7 +48,7 @@
 
 #define pmd_page(x)		virt_to_page(pmd_val(x) & PAGE_MASK)
 #define pmd_page_vaddr(x)	(pmd_val(x) & _PAGE_CHG_MASK)
-#define pud_page_vaddr(x)	(pud_val(x) & _PAGE_CHG_MASK)
+#define pud_pgtable(x)		((pmd_t *) (pud_val(x) & _PAGE_CHG_MASK))
 
 /* appears to be garbage */
 #define pmd_bad(x)	0

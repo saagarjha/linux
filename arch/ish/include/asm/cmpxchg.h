@@ -75,13 +75,13 @@
 		}                                                              \
 	})
 
-#define xchg(ptr, v)                                                   \
+#define arch_xchg(ptr, v)                                                   \
 	({                                                                 \
 		__typeof__(*(ptr)) __ret = (v);                                \
 		__size_dispatch((ptr), __xchg_op, xchg, (ptr), __ret);         \
 		__ret;                                                         \
 	})
-#define cmpxchg(ptr, old, new)                                         \
+#define arch_cmpxchg(ptr, old, new)                                         \
 	({                                                                 \
 		__typeof__(*(ptr)) __ret;                                      \
 		__size_dispatch((ptr), __xchg_op, cmpxchg, (ptr), __ret, old,  \

@@ -60,6 +60,7 @@
 
 #else	/* !__ASSEMBLER__ */
 #include <uapi/linux/elf.h>
+#ifdef __ELF__
 /*
  * Use an anonymous structure which matches the shape of
  * Elf{32,64}_Nhdr, but includes the name and desc data.  The size and
@@ -89,6 +90,10 @@
 		name,							\
 		desc							\
 	}
+#else
+#define _ELFNOTE(size, name, unique, type, desc)
+#endif
+
 #define ELFNOTE(size, name, type, desc)		\
 	_ELFNOTE(size, name, __LINE__, type, desc)
 

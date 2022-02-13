@@ -9,6 +9,8 @@ typedef u32 elf_greg_t;
 /* #define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t)) */
 #define ELF_NGREG 16
 typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+#define COMPAT_ELF_NGREG 16
+typedef elf_greg_t compat_elf_gregset_t[ELF_NGREG];
 /* typedef struct user_i387_struct elf_fpregset_t; */
 #define ELF_NFPREG 27
 typedef elf_greg_t elf_fpregset_t[ELF_NFPREG];
@@ -17,6 +19,8 @@ typedef elf_greg_t elf_fpregset_t[ELF_NFPREG];
  * This is used to ensure we don't load something for the wrong architecture.
  */
 #define elf_check_arch(x) \
+	compat_elf_check_arch(x)
+#define compat_elf_check_arch(x) \
 	(((x)->e_machine == EM_386) || ((x)->e_machine == EM_486))
 
 /* SVR4/i386 ABI (pages 3-31, 3-32) says that when the program starts %edx

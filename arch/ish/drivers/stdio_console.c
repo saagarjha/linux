@@ -50,7 +50,7 @@ static int stdio_tty_write(struct tty_struct *tty, const unsigned char *data, in
 	return res;
 }
 
-static int stdio_tty_write_room(struct tty_struct *tty)
+static unsigned int stdio_tty_write_room(struct tty_struct *tty)
 {
 	return 4096; /* bruh we don't buffer */
 }
@@ -170,7 +170,8 @@ static __init int stdio_init(void)
 		return err;
 	}
 
-	stdio_driver = alloc_tty_driver(1); /* TODO more than 1 */
+	stdio_driver = tty_alloc_driver(1, TTY_DRIVER_REAL_RAW |
+		TTY_DRIVER_RESET_TERMIOS); /* TODO more than 1 */
 	if (!stdio_driver)
 		return -ENOMEM;
 
@@ -182,14 +183,13 @@ static __init int stdio_init(void)
 	stdio_driver->type = TTY_DRIVER_TYPE_CONSOLE;
 	stdio_driver->subtype = SYSTEM_TYPE_CONSOLE;
 	stdio_driver->init_termios = tty_std_termios;
-	stdio_driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
 	tty_set_operations(stdio_driver, &stdio_ops);
 	tty_port_link_device(&stdio_port, stdio_driver, 0);
 
 	if (tty_register_driver(stdio_driver))
 		pr_err("stdio: failed to tty_register_driver");
 
-	stupid_driver = alloc_tty_driver(5);
+	stupid_driver = tty_alloc_driver(5, 0);
 	stupid_driver->driver_name = "stupid";
 	stupid_driver->name = "tty";
 	stupid_driver->name_base = 2;

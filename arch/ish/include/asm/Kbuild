@@ -1,12 +1,11 @@
-generic-y += asm-offsets.h
 generic-y += cache.h
 generic-y += extable.h
 generic-y += irqflags.h
-generic-y += local64.h
 generic-y += mcs_spinlock.h
 generic-y += qrwlock.h
 generic-y += qspinlock.h
 generic-y += user.h
+generic-y += kvm_para.h
 
 include $(srctree)/arch/ish/$(ABI_ARCH)/include/asm/Kbuild
 generated-y += $(redir-abi-y) $(redir-arch-y)
