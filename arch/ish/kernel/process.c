@@ -56,7 +56,10 @@ static void __user_thread(void)
 
 		if (interrupt == 6) {
 			/* undefined instruction */
-			show_signal(current, "undefined instruction", regs->ip);
+			char buf[16];
+			show_signal(current, "invalid opcode", regs->ip);
+			if (copy_from_user_nofault(buf, (void * __user) regs->ip, sizeof(buf)) == 0)
+				printk("%s[%d] invalid code: %16ph\n", current->comm, task_pid_nr(current), buf);
 			force_sig_fault(SIGILL, SI_KERNEL, (void __user *) regs->ip);
 		} else if (interrupt == 13 || interrupt == 14) {
 			/* GPF or page fault */
