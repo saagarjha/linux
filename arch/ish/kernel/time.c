@@ -4,17 +4,66 @@
 #include <linux/interrupt.h>
 #include <linux/sched_clock.h>
 #include <linux/timekeeping.h>
-#include <asm/delay.h>
+#include <linux/delay.h>
 #include <user/user.h>
 #include "time_user.h"
+#include "irq_user.h"
 
-// TODO make these make sense
+void __delay(unsigned long cycles)
+{
+	while (cycles--);
+}
 void __const_udelay(unsigned long xloops)
 {
-	while (xloops--) {}
+	unsigned long long loops;
+
+	loops = (unsigned long long) xloops * loops_per_jiffy * HZ;
+
+	__delay(loops >> 32);
 }
+
+static unsigned long measure_lpj(void)
+{
+	const unsigned long test_loops = 10000;
+	uint64_t start, end, test_nanos;
+
+	start = host_monotonic_nanos();
+	__delay(test_loops);
+	end = host_monotonic_nanos();
+	test_nanos = end - start;
+
+	// nanos per test: test_nanos
+	// loops per test: test_loops
+	// jiffies per sec: HZ
+	// nanos per sec: 1e9
+	//
+	// + loops per test
+	// / nanos per test
+	// * nanos per sec
+	// / jiffies per sec
+	// = loops_per_jiffy
+	return test_loops * 1000000000 / test_nanos / HZ;
+}
+
 void calibrate_delay(void)
 {
+	int i;
+
+	pr_info("Calibrating delay loop...");
+
+	/* The measurements can be wildly different from run to run due to various
+	 * things attributable to quantum randomness. That's no good. Let's take
+	 * several measurements and use the maximum. */
+	for (i = 0; i < 10; i++) {
+		unsigned long measurement = measure_lpj();
+		if (measurement > loops_per_jiffy)
+			loops_per_jiffy = measurement;
+	}
+
+	pr_cont("%lu.%02lu BogoMIPS (lpj=%lu)\n",
+		loops_per_jiffy/(500000/HZ),
+		(loops_per_jiffy/(5000/HZ)) % 100,
+		loops_per_jiffy);
 }
 
 void read_persistent_clock64(struct timespec64 *ts)
