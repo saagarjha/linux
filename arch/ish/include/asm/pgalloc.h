@@ -15,12 +15,16 @@ static inline void pmd_populate(struct mm_struct *mm,
 	*pmd = __pmd((unsigned long) __va(page_to_phys(pte)));
 }
 #define pud_populate(mm, pud, pmd) do { *pud = __pud((unsigned long) pmd); } while (0)
-#define __pte_free_tlb(tlb,pte, address)		\
+#define __pte_free_tlb(tlb, pte, address)		\
 do {							\
 	pgtable_pte_page_dtor(pte);			\
-	tlb_remove_page((tlb),(pte));			\
+	tlb_remove_page((tlb), (pte));			\
 } while (0)
-#define __pmd_free_tlb(tlb,x, address)   tlb_remove_page((tlb),virt_to_page(x))
+#define __pmd_free_tlb(tlb, pmd, address)		\
+do {							\
+	pgtable_pmd_page_dtor(virt_to_page(pmd));	\
+	tlb_remove_page((tlb), virt_to_page(pmd));	\
+} while (0)	
 #define pmd_pgtable(pmd) pmd_page(pmd)
 
 extern pgd_t *pgd_alloc(struct mm_struct *);
