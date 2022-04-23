@@ -111,8 +111,8 @@ extern char *empty_zero_page;
 
 // TODO: copied from um, don't really understand
 #define __swp_type(x)			(((x).val >> 5) & 0x1f)
-#define __swp_offset(x)			((x).val >> 11)
-#define __swp_entry(type, offset)	((swp_entry_t) { ((type) << 5) | ((offset) << 11) })
+#define __swp_offset(x)			((x).val >> PAGE_SHIFT)
+#define __swp_entry(type, offset)	((swp_entry_t) { ((type) << 5) | ((offset) << PAGE_SHIFT) })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val(pte) })
 
