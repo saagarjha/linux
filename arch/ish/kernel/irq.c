@@ -122,3 +122,13 @@ int get_smp_processor_id(void)
 {
 	return smp_processor_id();
 }
+
+void cpu_relax(void)
+{
+#if defined(__x86_64__)
+	__asm__ __volatile__("pause" ::: "memory");
+#elif defined(__arm64__)
+	__asm__ __volatile__("yield" ::: "memory");
+#endif
+	check_irqs();
+}

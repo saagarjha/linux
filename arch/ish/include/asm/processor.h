@@ -14,14 +14,7 @@
 
 struct task_struct;
 
-static __always_inline void cpu_relax(void)
-{
-#if defined(__x86_64__)
-	__asm__ __volatile__("pause" ::: "memory");
-#elif defined(__arm64__)
-	__asm__ __volatile__("yield" ::: "memory");
-#endif
-}
+extern void cpu_relax(void);
 
 static inline unsigned long __get_wchan(struct task_struct *p)
 {
