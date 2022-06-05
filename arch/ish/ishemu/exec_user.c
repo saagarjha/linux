@@ -38,10 +38,13 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	emu->cpu.ebp = regs->bp;
 	emu->cpu.esp = regs->sp;
 	emu->cpu.eip = regs->ip;
+	emu->cpu.eflags = regs->flags;
 	emu->cpu.tls_ptr = regs->tls;
+	expand_flags(&emu->cpu);
 
 	int interrupt = cpu_run_to_interrupt(&emu->cpu, &the_tlb);
 
+	collapse_flags(&emu->cpu);
 	regs->ax = emu->cpu.eax;
 	regs->bx = emu->cpu.ebx;
 	regs->cx = emu->cpu.ecx;
@@ -51,6 +54,7 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	regs->bp = emu->cpu.ebp;
 	regs->sp = emu->cpu.esp;
 	regs->ip = emu->cpu.eip;
+	regs->flags = emu->cpu.eflags;
 	regs->tls = emu->cpu.tls_ptr;
 
 	if (interrupt == INT_GPF) {
