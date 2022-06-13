@@ -11,6 +11,7 @@ ssize_t host_pread(int fd, void *data, size_t len, off_t offset);
 int host_fstat_size(int fd, ssize_t *size);
 int host_ftruncate(int fd, off_t length);
 int fd_set_nonblock(int fd);
+int host_fsync(int fd, int datasync);
 
 struct host_timespec {
 	uint64_t tv_sec;

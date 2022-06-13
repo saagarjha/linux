@@ -117,6 +117,13 @@ int host_ftruncate(int fd, off_t length) {
 	return 0;
 }
 
+int host_fsync(int fd, int datasync) {
+	int err = (datasync ? fdatasync : fsync)(fd);
+	if (err < 0)
+		return errno_map();
+	return 0;
+}
+
 int host_futimens(int fd, const struct host_timespec in_times[2]) {
 	struct timespec times[2] = {
 		{.tv_sec = in_times[0].tv_sec, .tv_nsec = in_times[0].tv_nsec},
