@@ -50,6 +50,8 @@ config 64BIT
 	default y
 config COMPAT
 	def_bool y
+config COMPAT_FOR_U64_ALIGNMENT
+	def_bool y
 config IA32_EMULATION
 	def_bool y
 config SYSVIPC_COMPAT
