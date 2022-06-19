@@ -207,6 +207,7 @@ vmlinux_link()
 			libtool -static -o ${output} ${objects}
 		else
 			local list
+			rm -f ${output}
 			${AR} -rcT -o ${output} ${objects}
 			list=$(${AR} -t ${output})
 			rm ${output}
