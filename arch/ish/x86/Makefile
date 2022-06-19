@@ -7,6 +7,9 @@ VDSOCC = clang
 ifneq (,$(wildcard /usr/local/opt/llvm/bin/clang))
 	VDSOCC = /usr/local/opt/llvm/bin/clang
 endif
+ifneq (,$(wildcard /opt/homebrew/opt/llvm/bin/clang))
+	VDSOCC = /opt/homebrew/opt/llvm/bin/clang
+endif
 ifneq (,$(wildcard /opt/local/bin/clang))
 	VDSOCC = /opt/local/bin/clang
 endif
