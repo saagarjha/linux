@@ -121,7 +121,11 @@ int host_ftruncate(int fd, off_t length)
 
 int host_fsync(int fd, int datasync)
 {
+#if __linux__
 	int err = (datasync ? fdatasync : fsync)(fd);
+#else
+    int err = fsync(fd);
+#endif
 	if (err < 0)
 		return errno_map();
 	return 0;
