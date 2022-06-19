@@ -42,6 +42,19 @@ int host_unlinkat(int dir_fd, const char *path);
 int host_mkdirat(int dir_fd, const char *path, int mode);
 int host_rmdirat(int dir_fd, const char *path);
 
+struct host_statfs {
+	unsigned long bsize;
+	unsigned long frsize;
+	unsigned long blocks;
+	unsigned long bfree;
+	unsigned long bavail;
+	unsigned long files;
+	unsigned long ffree;
+	unsigned long fsid;
+	unsigned long namemax;
+};
+int host_fstatfs(int fd, struct host_statfs *statfs);
+
 struct user_iovec {
 	void *base;
 	size_t len;

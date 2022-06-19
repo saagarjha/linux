@@ -13,6 +13,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/uio.h>
 #include <termios.h>
 #include <time.h>
@@ -110,21 +111,24 @@ int host_fstat_size(int fd, ssize_t *size)
 	return 0;
 }
 
-int host_ftruncate(int fd, off_t length) {
+int host_ftruncate(int fd, off_t length)
+{
 	int err = ftruncate(fd, length);
 	if (err < 0)
 		return errno_map();
 	return 0;
 }
 
-int host_fsync(int fd, int datasync) {
+int host_fsync(int fd, int datasync)
+{
 	int err = (datasync ? fdatasync : fsync)(fd);
 	if (err < 0)
 		return errno_map();
 	return 0;
 }
 
-int host_futimens(int fd, const struct host_timespec in_times[2]) {
+int host_futimens(int fd, const struct host_timespec in_times[2])
+{
 	struct timespec times[2] = {
 		{.tv_sec = in_times[0].tv_sec, .tv_nsec = in_times[0].tv_nsec},
 		{.tv_sec = in_times[1].tv_sec, .tv_nsec = in_times[1].tv_nsec},
@@ -135,7 +139,8 @@ int host_futimens(int fd, const struct host_timespec in_times[2]) {
 	return 0;
 }
 
-int host_dup_opendir(int fd, void **dir_out) {
+int host_dup_opendir(int fd, void **dir_out)
+{
 	fd = dup(fd);
 	if (fd < 0)
 		return errno_map();
@@ -145,7 +150,8 @@ int host_dup_opendir(int fd, void **dir_out) {
 	return 0;
 }
 
-int host_readdir(void *dir, struct host_dirent *out) {
+int host_readdir(void *dir, struct host_dirent *out)
+{
 	errno = 0;
 	struct dirent *ent = readdir(dir);
 	if (ent == NULL)
@@ -156,22 +162,26 @@ int host_readdir(void *dir, struct host_dirent *out) {
 	return 1;
 }
 
-long host_telldir(void *dir) {
+long host_telldir(void *dir)
+{
 	long tell = telldir(dir);
 	return tell;
 }
 
-int host_seekdir(void *dir, long off) {
+int host_seekdir(void *dir, long off)
+{
 	seekdir(dir, off);
 	return 0;
 }
 
-int host_rewinddir(void *dir) {
+int host_rewinddir(void *dir)
+{
 	rewinddir(dir);
 	return 0;
 }
 
-int host_closedir(void *dir) {
+int host_closedir(void *dir)
+{
 	int err = closedir(dir);
 	if (err < 0)
 		return errno_map();
@@ -200,22 +210,43 @@ int host_linkat(int from_fd, const char *from, int to_fd, const char *to)
 		return errno_map();
 	return 0;
 }
-int host_unlinkat(int dir_fd, const char *path) {
+int host_unlinkat(int dir_fd, const char *path)
+{
 	int err = unlinkat(dir_fd, path, 0);
 	if (err < 0)
 		return errno_map();
 	return 0;
 }
-int host_mkdirat(int dir_fd, const char *path, int mode) {
+int host_mkdirat(int dir_fd, const char *path, int mode)
+{
 	int err = mkdirat(dir_fd, path, mode);
 	if (err < 0)
 		return errno_map();
 	return 0;
 }
-int host_rmdirat(int dir_fd, const char *path) {
+int host_rmdirat(int dir_fd, const char *path)
+{
 	int err = unlinkat(dir_fd, path, AT_REMOVEDIR);
 	if (err < 0)
 		return errno_map();
+	return 0;
+}
+
+int host_fstatfs(int fd, struct host_statfs *statfs)
+{
+	struct statvfs svfs;
+	int err = fstatvfs(fd, &svfs);
+	if (err < 0)
+		return errno_map();
+	statfs->bsize = svfs.f_bsize;
+	statfs->frsize = svfs.f_frsize;
+	statfs->blocks = svfs.f_blocks;
+	statfs->bfree = svfs.f_bfree;
+	statfs->bavail = svfs.f_bavail;
+	statfs->files = svfs.f_files;
+	statfs->ffree = svfs.f_ffree;
+	statfs->fsid = svfs.f_fsid;
+	statfs->namemax = svfs.f_namemax;
 	return 0;
 }
 
