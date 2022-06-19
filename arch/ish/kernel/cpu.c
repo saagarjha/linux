@@ -9,6 +9,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 	seq_printf(m, "bogomips\t: %lu.%02lu\n",
 		   loops_per_jiffy / (500000/HZ),
 		   loops_per_jiffy / (5000/HZ));
+	seq_printf(m, "cache_alignment\t: %d\n", L1_CACHE_BYTES);
 	seq_puts(m, "\n");
 	return 0;
 }
