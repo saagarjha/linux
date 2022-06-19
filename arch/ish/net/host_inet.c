@@ -276,7 +276,7 @@ static __poll_t host_inet_poll(struct file *filp, struct socket *sock, struct po
 static int host_inet_getname(struct socket *sock, struct sockaddr *addr, int peer)
 {
 	struct host_sock *host = host_sk(sock->sk);
-	return host_getname(host->fd, addr, peer);
+	return host_getname(host->fd, addr, sizeof(*addr), peer);
 }
 
 static struct proto_ops host_inet_ops = {
