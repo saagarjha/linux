@@ -127,7 +127,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	}
 	KSTK_ESP(p) = (unsigned long) task_stack_page(p) + THREAD_SIZE - sizeof(void *);
 	// AAPCS requires that that stack is quadword aligned.
-#ifdef __arm64__
+#ifdef __aarch64__
 	KSTK_ESP(p) &= ~0xf;
 #endif
 	KSTK_EIP(p) = (unsigned long) __kernel_thread;

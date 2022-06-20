@@ -1,3 +1,14 @@
+// TODO: Putting this arch kernel include directory on the user code include
+// path is a layering violation which causes fuckups when system headers
+// include asm/unistd.h and this takes precedence over the system version.
+// Here's a quick hack for now, but we should really get this out of the
+// include path. Putting it off since it requires a serious header organization
+// (adding a special directory for headers shared between user and kernel code,
+// and migrating a lot of code over there.)
+#if !defined(__KERNEL__)
+#include_next <asm/unistd.h>
+#else
+
 #ifndef __ASM_ISH_UNISTD_H
 #define __ASM_ISH_UNISTD_H
 
@@ -38,4 +49,5 @@
 #  define __ARCH_WANT_COMPAT_SYS_PREADV64V2
 #  define __ARCH_WANT_COMPAT_SYS_PWRITEV64V2
 
+#endif
 #endif

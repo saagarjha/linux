@@ -839,6 +839,7 @@ ethtool_rxnfc_copy_from_compat(struct ethtool_rxnfc *rxnfc,
 	 * On non-x86, no conversion should be needed.
 	 */
 	BUILD_BUG_ON(!IS_ENABLED(CONFIG_X86_64) &&
+		     !IS_ENABLED(CONFIG_ISH) &&
 		     sizeof(struct compat_ethtool_rxnfc) !=
 		     sizeof(struct ethtool_rxnfc));
 	BUILD_BUG_ON(offsetof(struct compat_ethtool_rxnfc, fs.m_ext) +

@@ -16,7 +16,7 @@ KBUILD_CFLAGS += -ffreestanding -fPIE
 
 ifdef CONFIG_HOST_DARWIN
 	KBUILD_CFLAGS += -U__weak -Wno-incompatible-library-redeclaration
-	KBUILD_HOSTCPPFLAGS += -I$(srctree)arch/ish/darwin-include -I$(objtree)arch/ish/include/generated/uapi -I$(srctree)include/uapi
+	KBUILD_HOSTCPPFLAGS += -I$(srctree)arch/ish/include-darwin -I$(objtree)arch/ish/include/generated/uapi -I$(srctree)include/uapi
 	KBUILD_HOSTCPPFLAGS += -D__EXPORTED_HEADERS__
 	KBUILD_LDFLAGS += -platform_version macos 10.15 10.15 -arch x86_64 # TODO
 endif

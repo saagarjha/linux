@@ -1,7 +1,7 @@
 #ifndef __ASM_ISH_BITSPERLONG_H
 #define __ASM_ISH_BITSPERLONG_H
 
-#if defined(__x86_64__) || defined(__arm64__)
+#if defined(__x86_64__) || defined(__aarch64__)
 #define __BITS_PER_LONG 64
 #else
 #error "unsupported architecture"
