@@ -68,7 +68,7 @@
  *
  * UML/x86_64 needs the same packing as x86_64
  */
-#ifdef __x86_64__
+#if defined(__x86_64__) || CONFIG_ISH
 #define EPOLL_PACKED __attribute__((packed))
 #else
 #define EPOLL_PACKED
