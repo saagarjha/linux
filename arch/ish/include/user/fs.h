@@ -61,6 +61,7 @@ struct user_iovec {
 };
 
 void termio_make_raw(int fd);
+int termio_getwinsz(int fd, unsigned short *cols, unsigned short *rows);
 
 struct fd_listener {
 	int irq;

@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
@@ -460,12 +461,24 @@ int fd_poll(int fd)
 		return 0;
 	return p.revents;
 }
+
 void termio_make_raw(int fd)
 {
 	struct termios tio;
 	tcgetattr(fd, &tio);
 	cfmakeraw(&tio);
 	tcsetattr(fd, TCSANOW, &tio);
+}
+
+int termio_getwinsz(int fd, unsigned short *cols, unsigned short *rows)
+{
+	struct winsize winsz;
+	int err = ioctl(fd, TIOCGWINSZ, &winsz);
+	if (err < 0)
+		return errno_map();
+	*cols = winsz.ws_col;
+	*rows = winsz.ws_row;
+	return 0;
 }
 
 void host_pause(void)
@@ -513,3 +526,8 @@ int host_get_nproc(void)
 	return nproc;
 }
 #endif
+
+const char *host_getenv(const char *name)
+{
+	return getenv(name);
+}
