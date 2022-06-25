@@ -1,13 +1,15 @@
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/sysrq.h>
+#include <linux/termios.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
-#include <linux/sysrq.h>
 #include <asm/irq.h>
 #include <asm/poll.h>
 
 #include <user/fs.h>
+#include <user/user.h>
 
 static struct tty_driver *stdio_driver;
 struct tty_port stdio_port;
@@ -86,6 +88,15 @@ static irqreturn_t stdin_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static void sync_window_size(struct tty_struct *tty, int fd)
+{
+	struct winsize ws = {};
+	int err = termio_getwinsz(fd, &ws.ws_col, &ws.ws_row);
+	if (err < 0)
+		return;
+	tty_do_resize(tty, &ws);
+}
+
 static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
 {
 	int err;
@@ -101,6 +112,7 @@ static int stdio_activate(struct tty_port *port, struct tty_struct *tty)
 		port->client_data = &listener;
 
 		termio_make_raw(STDIN_FD);
+		sync_window_size(tty, STDIN_FD);
 	}
 	return 0;
 }
@@ -115,12 +127,12 @@ static void stdio_console_write(struct console *console, const char *data, unsig
 	while (len) {
 		const char *newline = memchr(data, '\n', len);
 		if (newline != NULL) {
-			write_full(STDOUT_FD, data, newline - data);
-			write_full(STDOUT_FD, "\r\n", 2);
+			write_full(STDERR_FD, data, newline - data);
+			write_full(STDERR_FD, "\r\n", 2);
 			len -= newline - data + 1;
 			data = newline + 1;
 		} else {
-			write_full(STDOUT_FD, data, len);
+			write_full(STDERR_FD, data, len);
 			len = 0;
 		}
 	}
@@ -160,6 +172,8 @@ static struct tty_operations stupid_ops = {
 static __init int stdio_init(void)
 {
 	int i, err;
+	extern char *envp_init[];
+	static char TERM_ENV[100] = "TERM=";
 
 	tty_port_init(&stdio_port);
 	stdio_port.ops = &stdio_port_ops;
@@ -202,6 +216,14 @@ static __init int stdio_init(void)
 		panic("failed to register stupid driver");
 
 	register_console(&stdio_console);
+
+	for (i = 0; envp_init[i]; i++) {
+		if (strncmp(TERM_ENV, envp_init[i], strlen(TERM_ENV)) == 0) {
+			strcat(TERM_ENV, host_getenv("TERM"));
+			envp_init[i] = TERM_ENV;
+			break;
+		}
+	}
 	return 0;
 }
 late_initcall(stdio_init);
