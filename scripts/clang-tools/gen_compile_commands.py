@@ -134,8 +134,17 @@ def cmdfiles_for_a(archive, ar):
     Yields:
         The path to every .cmd file found
     """
-    for obj in subprocess.check_output([ar, '-t', archive]).decode().split():
-        yield to_cmdfile(obj)
+    if archive.endswith('built-in.a') and sys.platform == 'darwin':
+        with open(archive) as a:
+            for obj in a.read().split():
+                yield to_cmdfile(obj)
+    else:
+        for obj in subprocess.check_output([ar, '-t', archive]).decode().split():
+            if not obj.endswith('.o'):
+                continue
+            if sys.platform == 'darwin':
+                obj = os.path.join(os.path.dirname(archive), obj)
+            yield to_cmdfile(obj)
 
 
 def cmdfiles_for_modorder(modorder):
