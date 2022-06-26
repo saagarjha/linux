@@ -26,13 +26,14 @@
 #error "pagetables don't line up!"
 #endif
 
-#define _PAGE_ACCESSED	(1 << 0)
-#define _PAGE_DIRTY	(1 << 1)
-#define _PAGE_WRITE	(1 << 2)
-#define _PAGE_CHG_MASK	(~(_PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_WRITE))
+#define _PAGE_PRESENT	(1 << 0)
+#define _PAGE_ACCESSED	(1 << 1)
+#define _PAGE_DIRTY	(1 << 2)
+#define _PAGE_WRITE	(1 << 3)
+#define _PAGE_CHG_MASK	(~(_PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_WRITE))
 
 #define pte_none(x)	(pte_val(x) == 0)
-#define pte_present(x)	(pte_val(x) != 0)
+#define pte_present(x)	(pte_val(x) & _PAGE_PRESENT)
 #define pte_young(x)	(pte_val(x) & _PAGE_ACCESSED)
 #define pte_dirty(x)	(pte_val(x) & _PAGE_DIRTY)
 #define pte_write(x)	(pte_val(x) & _PAGE_WRITE)
@@ -74,11 +75,11 @@
 #define pgd_ERROR(e) \
 	printk("%s:%d: bad pgd %08lx.\n", __FILE__, __LINE__, pgd_val(e))
 
-#define PAGE_NONE	__pgprot(0)
-#define PAGE_SHARED	__pgprot(_PAGE_WRITE)
-#define PAGE_COPY	__pgprot(0)
-#define PAGE_READONLY	__pgprot(0)
-#define PAGE_KERNEL	__pgprot(_PAGE_WRITE)
+#define PAGE_NONE	__pgprot(_PAGE_PRESENT)
+#define PAGE_SHARED	__pgprot(_PAGE_PRESENT | _PAGE_WRITE)
+#define PAGE_COPY	__pgprot(_PAGE_PRESENT)
+#define PAGE_READONLY	__pgprot(_PAGE_PRESENT)
+#define PAGE_KERNEL	__pgprot(_PAGE_PRESENT | _PAGE_WRITE)
 
 extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
@@ -109,10 +110,9 @@ extern char *empty_zero_page;
 
 #include <asm-generic/memory_model.h>
 
-// TODO: copied from um, don't really understand
-#define __swp_type(x)			(((x).val >> 5) & 0x1f)
+#define __swp_type(x)			(((x).val >> 1) & 0x1f)
 #define __swp_offset(x)			((x).val >> PAGE_SHIFT)
-#define __swp_entry(type, offset)	((swp_entry_t) { ((type) << 5) | ((offset) << PAGE_SHIFT) })
+#define __swp_entry(type, offset)	((swp_entry_t) { ((type) << 1) | ((offset) << PAGE_SHIFT) })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val(pte) })
 
