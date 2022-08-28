@@ -5,7 +5,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 {
 	unsigned long cpu = (unsigned long) v - 1;
 	seq_printf(m, "processor\t: %lu\n", cpu);
-	seq_printf(m, "vendor_id\t: iSH\n", cpu);
+	seq_printf(m, "vendor_id\t: iSH\n");
 	seq_printf(m, "bogomips\t: %lu.%02lu\n",
 		   loops_per_jiffy / (500000/HZ),
 		   loops_per_jiffy / (5000/HZ));
