@@ -50,6 +50,8 @@ static struct {
 	pthread_cond_t cond;
 } wakeup[NR_CPUS];
 
+static int running_under_rr;
+
 void trigger_irq_check(int cpu)
 {
 	pthread_mutex_lock(&wakeup[cpu].lock);
@@ -80,6 +82,9 @@ void user_init_IRQ(void)
 		pthread_cond_init(&wakeup[i].cond, NULL);
 		wakeup[i].should_wakeup = 0;
 	}
+
+	if (getenv("RUNNING_UNDER_RR"))
+		running_under_rr = 1;
 }
 
 void user_setup_thread(void)
@@ -88,4 +93,19 @@ void user_setup_thread(void)
 	sigemptyset(&set);
 	sigaddset(&set, SIGPIPE);
 	pthread_sigmask(SIG_BLOCK, &set, NULL);
+}
+
+void cpu_relax_user()
+{
+	/* In order to deterministically record, rr needs to run every thread
+	 * on one cpu. Many bugs won't show up with only one cpu, so we often
+	 * have to pretend there are multiple cpus. But this is extremely
+	 * unfriendly to spinlocks. With actual concurrency, a spinlock release
+	 * will be seen by other cpus relatively quickly, but under rr's
+	 * scheduler, it will take until the end of the quantum. So, if running
+	 * under rr, tell rr that now would be a good time to try and run
+	 * another thread. We don't want to do this if not under rr, as this
+	 * would unfairly deprioritize us. */
+	if (running_under_rr)
+		sched_yield();
 }

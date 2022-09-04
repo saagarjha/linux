@@ -123,6 +123,8 @@ int get_smp_processor_id(void)
 	return smp_processor_id();
 }
 
+extern void cpu_relax_user(void);
+
 void cpu_relax(void)
 {
 #if defined(__x86_64__)
@@ -131,4 +133,5 @@ void cpu_relax(void)
 	__asm__ __volatile__("yield" ::: "memory");
 #endif
 	check_irqs();
+	cpu_relax_user();
 }
