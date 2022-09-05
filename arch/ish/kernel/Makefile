@@ -11,13 +11,10 @@ obj-y := cpu.o irq.o mem.o reboot.o setup.o signal.o time.o trap.o process.o \
 obj-y += syscalls_user.o irq_user.o time_user.o poll_user.o threads_user.o setup_user.o random_user.o
 obj-y += setjmp.o
 
+obj-y += stubs.o
+
 obj-$(CONFIG_EARLY_PRINTK) += early_printk.o
 obj-$(CONFIG_SMP) += smp.o
 obj-$(CONFIG_ARCH_KALLSYMS) += kallsyms.o kallsyms_user.o
-ifdef CONFIG_SMP
-	USER_CFLAGS += -DNR_CPUS=$(CONFIG_NR_CPUS)
-else
-	USER_CFLAGS += -DNR_CPUS=1
-endif
 
 include arch/um/scripts/Makefile.rules

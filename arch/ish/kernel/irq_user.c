@@ -12,6 +12,7 @@
 #include <user/fs.h>
 #include <user/irq.h>
 #include <user/poll.h>
+#include <emu/exec.h>
 #include "irq_user.h"
 #include "threads_user.h"
 
@@ -55,18 +56,18 @@ static int running_under_rr;
 void trigger_irq_check(int cpu)
 {
 	pthread_mutex_lock(&wakeup[cpu].lock);
-	wakeup[cpu].should_wakeup = 1;
+	__atomic_store_n(&wakeup[cpu].should_wakeup, 1, __ATOMIC_SEQ_CST);
 	pthread_cond_broadcast(&wakeup[cpu].cond);
 	pthread_mutex_unlock(&wakeup[cpu].lock);
+	emu_poke_cpu(cpu);
 }
 
 void arch_cpu_idle(void)
 {
 	int cpu = get_smp_processor_id();
 	pthread_mutex_lock(&wakeup[cpu].lock);
-	while (!wakeup[cpu].should_wakeup)
+	while (!__atomic_exchange_n(&wakeup[cpu].should_wakeup, 0, __ATOMIC_SEQ_CST))
 		pthread_cond_wait(&wakeup[cpu].cond, &wakeup[cpu].lock);
-	wakeup[cpu].should_wakeup = 0;
 	pthread_mutex_unlock(&wakeup[cpu].lock);
 }
 

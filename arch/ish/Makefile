@@ -22,6 +22,11 @@ ifdef CONFIG_HOST_DARWIN
 endif
 
 USER_CFLAGS = -I$(srctree)/arch/ish/include
+ifdef CONFIG_SMP
+	USER_CFLAGS += -DNR_CPUS=$(CONFIG_NR_CPUS)
+else
+	USER_CFLAGS += -DNR_CPUS=1
+endif
 export USER_CFLAGS
 
 core-y += arch/ish/kernel/ arch/ish/mm/ arch/ish/drivers/ arch/ish/net/

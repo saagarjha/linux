@@ -2,6 +2,7 @@
 #include <asm/processor.h>
 #include <emu/emu.h>
 #include <emu/exec.h>
+#include "../kernel/irq_user.h"
 
 #include "emu/cpu.h"
 #include "emu/tlb.h"
@@ -27,6 +28,8 @@ static struct mmu_ops ishemu_ops = {
 
 extern unsigned long (*sys_call_table[])(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long);
 
+static bool poke[NR_CPUS];
+
 int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 {
 	emu->cpu.eax = regs->ax;
@@ -41,6 +44,7 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 	emu->cpu.eflags = regs->flags;
 	emu->cpu.tls_ptr = regs->tls;
 	expand_flags(&emu->cpu);
+	emu->cpu.poked_ptr = &poke[get_smp_processor_id()];
 
 	int interrupt = cpu_run_to_interrupt(&emu->cpu, &the_tlb);
 
@@ -64,6 +68,11 @@ int emu_run_to_interrupt(struct emu *emu, struct pt_regs *regs)
 		regs->cr2 = regs->error_code = 0;
 	}
 	return interrupt;
+}
+
+void emu_poke_cpu(int cpu)
+{
+	__atomic_store_n(&poke[cpu], true, __ATOMIC_SEQ_CST);
 }
 
 void emu_flush_tlb_local(struct emu_mm *mm, unsigned long start, unsigned long end)
