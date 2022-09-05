@@ -27,8 +27,10 @@ quiet_cmd_vdsold = VDSOLD  $@
 
 $(obj)/libvdso.so: $(vobjs) $(obj)/vdso.lds FORCE
 	$(call if_changed,vdsold)
+targets += libvdso.so
 
 quiet_cmd_vdso_sym = VDSOSYM $@
       cmd_vdso_sym = $(NM) $< | awk '/ T __kernel/ {printf(".%s = 0x%s,\n", $$3, $$1)}' > $@
 include/generated/vdso-offsets.h: $(obj)/libvdso.so FORCE
 	$(call if_changed,vdso_sym)
+targets += ../../../include/generated/vdso-offsets.h
