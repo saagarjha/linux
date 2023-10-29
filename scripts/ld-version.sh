@@ -24,7 +24,7 @@ orig_args="$@"
 # Get the first line of the --version output.
 IFS='
 '
-set -- $(LC_ALL=C "$@" -v --version 2>&1)
+set -- $(LC_ALL=C "$@" -v 2>&1)
 
 # Split the line on spaces.
 IFS=' '
@@ -39,7 +39,7 @@ if [ "$1" = GNU -a "$2" = ld ]; then
 	name=BFD
 	disp_name="GNU ld"
 elif [ "$1" = "@(#)PROGRAM:ld" ]; then
-	version="${2#PROJECT:ld64-}"
+	version="${2#PROJECT:*-}"
 	name="Apple"
 	disp_name="Apple ld64"
 elif [ "$1" = GNU -a "$2" = gold ]; then
